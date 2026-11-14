@@ -1,0 +1,16 @@
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+
+  &--success { background: #e8f6ed; color: #166534; }
+  &--warning { background: #fef6dd; color: #854d0e; }
+  &--danger  { background: #fde8e8; color: #991b1b; }
+  &--info    { background: #e3eefe; color: #1d4ed8; }
+  &--purple  { background: #f0e8fd; color: #6d28d9; }
+  &--orange  { background: #ffeddd; color: #c2410c; }
+  &--neutral { background: #eaeff5; color: #475569; }
+}
