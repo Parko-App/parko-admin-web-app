@@ -1,0 +1,27 @@
+// Identidad visual de Parko (paleta institucional UTN).
+:root {
+  --color-primary: #2b5797;
+  --color-primary-dark: #1f4e79;
+  --color-primary-light: #3a6ab8;
+  --color-sidebar: #1a3d6b;
+  --color-sidebar-hover: #2b5797;
+
+  --color-background: #f0f4f8;
+  --color-surface: #ffffff;
+  --color-border: #d1dce8;
+  --color-text: #1e2a38;
+  --color-muted: #6b7a8d;
+  --color-subtle: #a0b4c8;
+
+  --color-success: #16a34a;
+  --color-warning: #ca8a04;
+  --color-orange: #ea580c;
+  --color-danger: #dc2626;
+  --color-info: #2563eb;
+  --color-purple: #7c3aed;
+
+  --radius-card: 8px;
+  --space-page: 24px;
+  --shadow-modal: 0 10px 30px rgba(26, 61, 107, 0.25);
+  --font-family: 'Inter', system-ui, sans-serif;
+}
