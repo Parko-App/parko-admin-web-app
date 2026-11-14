@@ -1,0 +1,46 @@
+<aside class="sidebar">
+  <div class="sidebar__brand">
+    <span class="sidebar__logo" aria-hidden="true">P</span>
+    <div>
+      <p class="sidebar__name">PARKO</p>
+      <p class="sidebar__sub">UTN · FRC</p>
+    </div>
+  </div>
+
+  <nav class="sidebar__nav" aria-label="Navegación principal">
+    <ul>
+      @for (item of items; track item.path) {
+        <li>
+          <a
+            class="nav-link"
+            [routerLink]="item.path"
+            routerLinkActive="nav-link--active"
+            ariaCurrentWhenActive="page"
+          >
+            <app-icon [name]="item.icon" />
+            <span class="nav-link__label">{{ item.label }}</span>
+            @if (item.badge === 'incidents' && badges.openIncidents() > 0) {
+              <span class="nav-link__badge" [attr.aria-label]="badges.openIncidents() + ' incidencias abiertas'">
+                {{ badges.openIncidents() }}
+              </span>
+            }
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
+
+  <div class="sidebar__footer">
+    <div class="sidebar__user">
+      <span class="sidebar__avatar" aria-hidden="true">{{ user.initials() }}</span>
+      <div class="sidebar__user-info">
+        <p class="sidebar__user-name">{{ user.profile().nombre }}</p>
+        <p class="sidebar__user-role">{{ user.profile().rol }}</p>
+      </div>
+    </div>
+    <button type="button" class="sidebar__logout" (click)="logout.emit()">
+      <app-icon name="logout" [size]="16" />
+      Cerrar sesión
+    </button>
+  </div>
+</aside>

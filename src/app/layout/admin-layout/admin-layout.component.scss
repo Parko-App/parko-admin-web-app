@@ -1,0 +1,38 @@
+.admin-layout {
+  display: flex;
+  height: 100vh; // ocupa el alto completo de la ventana
+  overflow: hidden;
+
+  &__main {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  // Solo el contenido hace scroll; el sidebar permanece visible.
+  &__content {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-page);
+
+    &:focus {
+      outline: none;
+    }
+  }
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 8px;
+  z-index: 10;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--color-primary);
+  color: #fff;
+
+  &:focus {
+    left: 8px;
+  }
+}
