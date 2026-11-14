@@ -1,11 +1,6 @@
 import { formatDate } from '@angular/common';
 import { Pipe, PipeTransform } from '@angular/core';
-
-/**
- * Argentina no usa horario de verano: America/Argentina/Cordoba es siempre UTC-3.
- * Angular solo admite offsets en el parámetro timezone, no nombres IANA.
- */
-const ARGENTINA_UTC_OFFSET = '-0300';
+import { ARGENTINA_UTC_OFFSET } from '../utils/argentina-time';
 
 /**
  * Formatea fechas con el formato regional argentino.

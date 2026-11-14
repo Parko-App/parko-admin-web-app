@@ -1,0 +1,25 @@
+<header class="topbar">
+  <h1 class="topbar__title">{{ title() }}</h1>
+
+  <div class="topbar__actions">
+    <time class="topbar__date">{{ today }}</time>
+
+    <span class="status-badge">
+      <span class="status-badge__dot" aria-hidden="true"></span>
+      Sistema operativo
+    </span>
+
+    <button
+      type="button"
+      class="topbar__bell"
+      [attr.aria-label]="
+        badges.notifications() > 0 ? 'Notificaciones: ' + badges.notifications() + ' sin leer' : 'Notificaciones'
+      "
+    >
+      <app-icon name="bell" [size]="20" />
+      @if (badges.notifications() > 0) {
+        <span class="topbar__count" aria-hidden="true">{{ badges.notifications() }}</span>
+      }
+    </button>
+  </div>
+</header>

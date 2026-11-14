@@ -1,0 +1,12 @@
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+<div class="admin-layout">
+  <app-sidebar (logout)="onLogout()" />
+
+  <div class="admin-layout__main">
+    <app-topbar />
+    <main id="contenido" class="admin-layout__content" tabindex="-1">
+      <router-outlet />
+    </main>
+  </div>
+</div>
