@@ -15,3 +15,18 @@ export const USE_MOCKS = new InjectionToken<boolean>('USE_MOCKS', {
   providedIn: 'root',
   factory: () => environment.useMocks,
 });
+
+export interface FirebaseWebConfig {
+  apiKey: string;
+  authDomain: string;
+  projectId: string;
+  storageBucket: string;
+  messagingSenderId: string;
+  appId: string;
+}
+
+/** Configuración web del proyecto Firebase (el mismo que usa la app mobile). */
+export const FIREBASE_CONFIG = new InjectionToken<FirebaseWebConfig>('FIREBASE_CONFIG', {
+  providedIn: 'root',
+  factory: () => environment.firebase,
+});

@@ -8,6 +8,9 @@ import { SidebarComponent } from './sidebar/sidebar.component';
 import { TopbarComponent } from './topbar/topbar.component';
 import { NavBadgesService } from './nav-badges.service';
 import { routes } from '../app.routes';
+import { provideHttpClient } from '@angular/common/http';
+import { AuthService } from '../core/auth/auth.service';
+import { MOCK_AUTH_PROVIDERS } from '../core/auth/auth.providers';
 
 registerLocaleData(localeEsAr, 'es-AR');
 
@@ -15,8 +18,10 @@ describe('Layout administrativo', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AdminLayoutComponent],
-      providers: [provideRouter(routes), { provide: LOCALE_ID, useValue: 'es-AR' }],
+      providers: [provideRouter(routes), provideHttpClient(), ...MOCK_AUTH_PROVIDERS, { provide: LOCALE_ID, useValue: 'es-AR' }],
     }).compileComponents();
+    sessionStorage.clear();
+    await TestBed.inject(AuthService).login('admin@parko.site', 'Admin1234!');
   });
 
   it('el sidebar muestra los 7 ítems y no incluye "Llaves"', async () => {

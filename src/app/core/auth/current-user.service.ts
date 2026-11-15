@@ -1,24 +1,22 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
-import { USE_MOCKS } from '../config/tokens';
+import { Injectable, computed, inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { AuthService } from './auth.service';
 
 export interface AdminProfile {
   nombre: string;
   rol: string;
 }
 
-/**
- * Administrador con sesión iniciada.
- * PROVISORIO: en la US4 se reemplaza por los datos reales de /auth/me.
- */
+/** Administrador con sesión iniciada, en el formato que usa el layout. */
 @Injectable({ providedIn: 'root' })
 export class CurrentUserService {
-  private readonly useMocks = inject(USE_MOCKS);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
 
-  readonly profile = signal<AdminProfile>(
-    this.useMocks
-      ? { nombre: 'María Acosta', rol: 'Administrador' }
-      : { nombre: 'Administrador', rol: 'Administrador' },
-  );
+  readonly profile = computed<AdminProfile>(() => {
+    const user = this.auth.user();
+    return { nombre: user?.nombre ?? 'Administrador', rol: 'Administrador' };
+  });
 
   readonly initials = computed(() =>
     this.profile()
@@ -29,6 +27,8 @@ export class CurrentUserService {
       .join(''),
   );
 
-  /** Se conecta con el cierre de sesión real en la US4. */
-  logout(): void {}
+  async logout(): Promise<void> {
+    await this.auth.logout();
+    await this.router.navigateByUrl('/login');
+  }
 }

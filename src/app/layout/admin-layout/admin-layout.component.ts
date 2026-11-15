@@ -17,6 +17,6 @@ export class AdminLayoutComponent {
   private readonly user = inject(CurrentUserService);
 
   protected onLogout(): void {
-    this.user.logout();
+    void this.user.logout();
   }
 }
