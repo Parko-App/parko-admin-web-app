@@ -24,3 +24,14 @@ export class AuthError extends Error {
     super(code);
   }
 }
+
+/**
+ * Alta de administrador con código de invitación.
+ * CONTRATO SUPUESTO (pendiente de confirmar con backend): POST /api/v1/admin/register
+ */
+export interface RegisterAdminRequest {
+  fullName: string;
+  email: string;
+  password: string;
+  invitationCode: string;
+}
