@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { authGuard, guestGuard } from './core/auth/auth.guard';
 import { AdminLayoutComponent } from './layout/admin-layout/admin-layout.component';
 
 const underConstruction = () =>
@@ -6,13 +7,20 @@ const underConstruction = () =>
     (m) => m.UnderConstructionComponent,
   );
 
-// Las rutas públicas (/login, /registro) y los guards se agregan en la US4 y US5.
+// /registro se agrega en la US5.
 // Cada sección reemplaza su loadComponent cuando se desarrolla su pantalla.
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'admin/dashboard' },
   {
+    path: 'login',
+    title: 'Iniciar sesión',
+    canActivate: [guestGuard],
+    loadComponent: () => import('./features/auth/login/login.component').then((m) => m.LoginComponent),
+  },
+  {
     path: 'admin',
     component: AdminLayoutComponent,
+    canActivate: [authGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       { path: 'dashboard', title: 'Dashboard', loadComponent: underConstruction },

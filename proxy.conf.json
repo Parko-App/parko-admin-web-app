@@ -1,0 +1,7 @@
+{
+  "/api": {
+    "target": "https://api.parko.site",
+    "secure": true,
+    "changeOrigin": true
+  }
+}
