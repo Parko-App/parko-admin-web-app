@@ -1,18 +1,22 @@
-<main class="login">
-  <section class="login__card" aria-labelledby="login-title">
-    <div class="login__brand">
-      <span class="login__logo" aria-hidden="true">P</span>
+<main class="auth">
+  <section class="auth__card" aria-labelledby="login-title">
+    <div class="auth__brand">
+      <span class="auth__logo" aria-hidden="true">P</span>
       <div>
-        <p class="login__name">PARKO</p>
-        <p class="login__sub">UTN · FRC</p>
+        <p class="auth__name">PARKO</p>
+        <p class="auth__sub">UTN · FRC</p>
       </div>
     </div>
 
     <h1 id="login-title">Iniciar sesión</h1>
-    <p class="login__intro">Ingresá con tu cuenta de administrador.</p>
+    <p class="auth__intro">Ingresá con tu cuenta de administrador.</p>
+
+    @if (registered) {
+      <div class="auth__notice" role="status">Cuenta creada correctamente. Iniciá sesión.</div>
+    }
 
     @if (error(); as message) {
-      <div class="login__error" role="alert">{{ message }}</div>
+      <div class="auth__error" role="alert">{{ message }}</div>
     }
 
     <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
@@ -62,13 +66,15 @@
         }
       </div>
 
-      <button type="submit" class="login__submit" [disabled]="loading()">
+      <button type="submit" class="auth__submit" [disabled]="loading()">
         {{ loading() ? 'Ingresando…' : 'Ingresar' }}
       </button>
     </form>
 
+    <p class="auth__alt">¿Tenés un código de invitación? <a routerLink="/registro">Crear cuenta</a></p>
+
     @if (demoMode) {
-      <p class="login__demo">
+      <p class="auth__demo">
         Modo demo (sin backend): <strong>admin&#64;parko.site</strong> / <strong>Admin1234!</strong>
       </p>
     }

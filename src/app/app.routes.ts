@@ -7,7 +7,6 @@ const underConstruction = () =>
     (m) => m.UnderConstructionComponent,
   );
 
-// /registro se agrega en la US5.
 // Cada sección reemplaza su loadComponent cuando se desarrolla su pantalla.
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'admin/dashboard' },
@@ -16,6 +15,12 @@ export const routes: Routes = [
     title: 'Iniciar sesión',
     canActivate: [guestGuard],
     loadComponent: () => import('./features/auth/login/login.component').then((m) => m.LoginComponent),
+  },
+  {
+    path: 'registro',
+    title: 'Crear cuenta de administrador',
+    canActivate: [guestGuard],
+    loadComponent: () => import('./features/auth/register/register.component').then((m) => m.RegisterComponent),
   },
   {
     path: 'admin',

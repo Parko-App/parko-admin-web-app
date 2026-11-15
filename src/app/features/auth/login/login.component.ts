@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { authErrorMessage } from '../../../core/auth/auth-error-message';
 import { AuthService } from '../../../core/auth/auth.service';
 import { USE_MOCKS } from '../../../core/config/tokens';
@@ -10,7 +10,7 @@ const DEFAULT_URL = '/admin/dashboard';
 @Component({
   selector: 'app-login',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
 })
@@ -19,6 +19,7 @@ export class LoginComponent {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
+  protected readonly registered = this.route.snapshot.queryParamMap.get('registered') === '1';
   protected readonly demoMode = inject(USE_MOCKS);
   protected readonly form = inject(FormBuilder).nonNullable.group({
     email: ['', [Validators.required, Validators.email]],

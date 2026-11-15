@@ -2,6 +2,7 @@ import { EnvironmentProviders, Provider, inject, provideAppInitializer } from '@
 import { ApiClient } from '../services/api-client.service';
 import { FIREBASE_CONFIG, USE_MOCKS } from '../config/tokens';
 import { AdminProfileApi, HttpAdminProfileApi, MockAdminProfileApi } from './admin-profile.api';
+import { HttpRegistrationApi, MockRegistrationApi, RegistrationApi } from './registration.api';
 import { AuthGateway } from './auth.gateway';
 import { AuthService } from './auth.service';
 import { FirebaseAuthGateway } from './firebase-auth.gateway';
@@ -18,6 +19,10 @@ export function provideAuth(): (Provider | EnvironmentProviders)[] {
       provide: AdminProfileApi,
       useFactory: () => (inject(USE_MOCKS) ? new MockAdminProfileApi() : new HttpAdminProfileApi(inject(ApiClient))),
     },
+    {
+      provide: RegistrationApi,
+      useFactory: () => (inject(USE_MOCKS) ? new MockRegistrationApi() : new HttpRegistrationApi(inject(ApiClient))),
+    },
     provideAppInitializer(() => inject(AuthService).restoreSession()),
   ];
 }
@@ -26,4 +31,5 @@ export function provideAuth(): (Provider | EnvironmentProviders)[] {
 export const MOCK_AUTH_PROVIDERS: Provider[] = [
   { provide: AuthGateway, useFactory: () => new MockAuthGateway() },
   { provide: AdminProfileApi, useFactory: () => new MockAdminProfileApi() },
+  { provide: RegistrationApi, useFactory: () => new MockRegistrationApi() },
 ];

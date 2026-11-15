@@ -31,3 +31,25 @@ export function authErrorMessage(error: unknown): string {
       return 'No se pudo iniciar sesión. Intentá nuevamente.';
   }
 }
+
+/** Mensaje en español para los errores del registro de administrador. */
+export function registerErrorMessage(error: unknown): string {
+  if (error instanceof HttpErrorResponse) {
+    const serverMessage =
+      error.error && typeof error.error === 'object' && typeof error.error.message === 'string'
+        ? (error.error.message as string)
+        : null;
+    switch (error.status) {
+      case 400:
+      case 422:
+        return serverMessage ?? 'Revisá los datos ingresados.';
+      case 403:
+        return serverMessage ?? 'El código de invitación no es válido o ya fue utilizado.';
+      case 409:
+        return 'Ya existe una cuenta con ese email.';
+      default:
+        return toErrorMessage(error);
+    }
+  }
+  return 'No se pudo crear la cuenta. Intentá nuevamente.';
+}
