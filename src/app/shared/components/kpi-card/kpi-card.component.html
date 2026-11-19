@@ -1,0 +1,24 @@
+<article class="kpi card">
+  <header class="kpi__head">
+    <h3 class="kpi__label">{{ label() }}</h3>
+    @if (badge()) {
+      <app-status-badge [variant]="badgeVariant()">{{ badge() }}</app-status-badge>
+    }
+  </header>
+  <p class="kpi__value"><ng-content /></p>
+  @if (hint()) {
+    <p class="kpi__hint">{{ hint() }}</p>
+  }
+  @if (clamped() !== null) {
+    <div
+      class="kpi__bar"
+      role="progressbar"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      [attr.aria-valuenow]="clamped()"
+      [attr.aria-label]="label()"
+    >
+      <span class="kpi__fill" [class]="'kpi__fill--' + color()" [style.width.%]="clamped()"></span>
+    </div>
+  }
+</article>

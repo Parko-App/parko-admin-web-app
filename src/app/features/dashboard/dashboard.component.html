@@ -1,0 +1,129 @@
+<app-async-state
+  [status]="status()"
+  [error]="error()"
+  loadingMessage="Cargando el dashboard…"
+  (retry)="retry()"
+>
+  @if (summary(); as data) {
+    <div class="dash">
+    <section class="kpis" aria-label="Indicadores principales">
+      <app-kpi-card
+        label="Ocupación actual"
+        [badge]="occupancyBadge().label"
+        [badgeVariant]="occupancyBadge().variant"
+        [hint]="(occupancyPercent() | number: '1.1-1') + '% de capacidad'"
+        [progress]="occupancyPercent()"
+        color="primary"
+      >
+        {{ data.occupancy.current | number }} / {{ data.occupancy.capacity | number }}
+      </app-kpi-card>
+
+      <app-kpi-card
+        label="Ingresos del día"
+        [badge]="revenueChange().badge"
+        [badgeVariant]="revenueChange().variant"
+        [hint]="revenueChange().hint"
+      >
+        {{ data.revenueToday.amount | currencyAr }}
+      </app-kpi-card>
+
+      <app-kpi-card
+        label="Sesiones activas"
+        [hint]="data.activeSessions.visitors + ' visitantes · ' + data.activeSessions.registered + ' registrados'"
+      >
+        {{ data.activeSessions.total | number }}
+      </app-kpi-card>
+
+      <app-kpi-card
+        label="Visitantes hoy"
+        [badge]="pendingBadge()"
+        badgeVariant="orange"
+        [hint]="(data.visitorsToday.collected | currencyAr) + ' recaudado'"
+      >
+        {{ data.visitorsToday.count | number }}
+      </app-kpi-card>
+    </section>
+
+    <div class="middle">
+      <section class="card panel" aria-labelledby="chart-title">
+        <header class="panel__head">
+          <div>
+            <h2 id="chart-title">Ocupación — últimas 24 horas</h2>
+            <p>Vehículos estacionados por hora</p>
+          </div>
+          <app-status-badge variant="info">Hoy · {{ today }}</app-status-badge>
+        </header>
+        <app-line-chart [points]="chartPoints()" [ariaLabel]="chartLabel()" unit="vehículos" />
+      </section>
+
+      <section class="card panel" aria-labelledby="summary-title">
+        <header class="panel__head">
+          <h2 id="summary-title">Resumen del día</h2>
+        </header>
+        <dl class="summary">
+          <div><dt>Total ingresos</dt><dd>{{ data.dayStats.entries | number }}</dd></div>
+          <div><dt>Total egresos</dt><dd>{{ data.dayStats.exits | number }}</dd></div>
+          <div><dt>Visitantes únicos</dt><dd>{{ data.dayStats.uniqueVisitors | number }}</dd></div>
+          <div><dt>Pagos procesados</dt><dd>{{ data.dayStats.paymentsProcessed | number }}</dd></div>
+          <div><dt>Pagos pendientes</dt><dd>{{ data.dayStats.paymentsPending | number }}</dd></div>
+          <div><dt>Incidencias abiertas</dt><dd>{{ data.dayStats.openIncidents | number }}</dd></div>
+        </dl>
+        @for (alert of data.alerts; track alert.message) {
+          <p class="alert" [class]="'alert alert--' + alert.level" role="status">
+            <app-icon name="alert" [size]="14" />
+            {{ alert.message }}
+          </p>
+        }
+      </section>
+    </div>
+
+    <section class="card panel" aria-labelledby="access-title">
+      <header class="panel__head">
+        <h2 id="access-title">Últimos accesos</h2>
+        <span class="panel__note" [class.panel__note--warn]="refreshFailed()">
+          {{ refreshFailed() ? 'No se pudo actualizar · reintentando' : 'Actualización automática' }}
+        </span>
+      </header>
+
+      @if (recent().length === 0) {
+        <app-empty-state title="Todavía no hay accesos hoy" />
+      } @else {
+        <div class="table-scroll">
+          <table class="access">
+            <caption class="sr-only">Últimos accesos al estacionamiento</caption>
+            <thead>
+              <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Patente</th>
+                <th scope="col">Usuario</th>
+                <th scope="col">Tipo</th>
+                <th scope="col">Hora</th>
+                <th scope="col">Movimiento</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of recent(); track row.id) {
+                <tr>
+                  <td class="mono muted">{{ row.id }}</td>
+                  <td class="mono strong">{{ row.plate ?? '—' }}</td>
+                  <td>{{ row.userName }}</td>
+                  <td>
+                    <app-status-badge [variant]="userType(row.userType).variant">
+                      {{ userType(row.userType).label }}
+                    </app-status-badge>
+                  </td>
+                  <td class="mono">{{ row.timestamp | dateTimeAr: 'time' }}</td>
+                  <td [class]="'movement ' + movement(row.movement).css">
+                    <span aria-hidden="true">{{ movement(row.movement).arrow }}</span>
+                    {{ movement(row.movement).label }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+    </div>
+  }
+</app-async-state>
