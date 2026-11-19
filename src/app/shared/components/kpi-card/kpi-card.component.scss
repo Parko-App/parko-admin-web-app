@@ -1,0 +1,18 @@
+.kpi {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 16px 20px;
+
+  &__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  &__label { margin: 0; font-size: 11px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-muted); }
+  &__value { margin: 8px 0 2px; font-size: 28px; font-weight: 700; color: var(--color-text); }
+  &__hint { margin: 0; font-size: 12px; color: var(--color-muted); }
+  &__bar { margin-top: auto; padding-top: 0; height: 4px; border-radius: 2px; background: #e5ecf4; overflow: hidden; }
+  &__hint + &__bar, &__value + &__bar { margin-top: 12px; }
+  &__fill { display: block; height: 100%; border-radius: 2px; }
+  &__fill--primary { background: var(--color-primary); }
+  &__fill--success { background: var(--color-success); }
+  &__fill--purple { background: var(--color-purple); }
+  &__fill--orange { background: var(--color-orange); }
+}

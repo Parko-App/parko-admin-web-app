@@ -1,0 +1,22 @@
+.chart {
+  margin: 0;
+
+  svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
+
+  &__grid { stroke: #e5ecf4; stroke-width: 1; }
+  &__axis { fill: var(--color-subtle); font-size: 10px; }
+  &__line { stroke: var(--color-primary); stroke-width: 2; stroke-linecap: round; }
+  &__cursor { stroke: var(--color-border); stroke-dasharray: 3 3; }
+  &__dot { fill: var(--color-surface); stroke: var(--color-primary); stroke-width: 2; }
+  &__tip rect { fill: var(--color-sidebar); }
+  &__tip text { fill: #fff; font-size: 11px; font-weight: 500; }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

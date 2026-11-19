@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard, guestGuard } from './core/auth/auth.guard';
+import { DASHBOARD_SERVICE_PROVIDER } from './features/dashboard/dashboard.service';
 import { AdminLayoutComponent } from './layout/admin-layout/admin-layout.component';
 
 const underConstruction = () =>
@@ -28,7 +29,12 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
-      { path: 'dashboard', title: 'Dashboard', loadComponent: underConstruction },
+      {
+        path: 'dashboard',
+        title: 'Dashboard',
+        providers: [DASHBOARD_SERVICE_PROVIDER],
+        loadComponent: () => import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+      },
       { path: 'usuarios', title: 'Gestión de Usuarios', loadComponent: underConstruction },
       { path: 'vehiculos', title: 'Gestión de Vehículos', loadComponent: underConstruction },
       { path: 'pagos', title: 'Procesamiento de Pagos', loadComponent: underConstruction },

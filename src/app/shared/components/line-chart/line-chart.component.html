@@ -1,0 +1,49 @@
+<figure class="chart">
+  <svg
+    [attr.viewBox]="'0 0 ' + width + ' ' + height"
+    role="img"
+    [attr.aria-label]="ariaLabel()"
+    (pointermove)="onMove($event)"
+    (pointerleave)="hovered.set(null)"
+  >
+    <defs>
+      <linearGradient [attr.id]="gradientId" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="var(--color-primary)" stop-opacity="0.18" />
+        <stop offset="100%" stop-color="var(--color-primary)" stop-opacity="0" />
+      </linearGradient>
+    </defs>
+
+    @for (tick of yTicks(); track tick.value) {
+      <line class="chart__grid" [attr.x1]="plotLeft" [attr.x2]="plotRight" [attr.y1]="tick.y" [attr.y2]="tick.y" />
+      <text class="chart__axis" [attr.x]="plotLeft - 8" [attr.y]="tick.y + 3" text-anchor="end">{{ tick.value }}</text>
+    }
+
+    @for (item of xLabels(); track item.label) {
+      <text class="chart__axis" [attr.x]="item.x" [attr.y]="labelY" text-anchor="middle">{{ item.label }}</text>
+    }
+
+    <path [attr.d]="areaPath()" [attr.fill]="'url(#' + gradientId + ')'" />
+    <path class="chart__line" [attr.d]="linePath()" fill="none" />
+
+    @if (active(); as point) {
+      <line class="chart__cursor" [attr.x1]="point.x" [attr.x2]="point.x" [attr.y1]="12" [attr.y2]="plotBottom" />
+      <circle class="chart__dot" [attr.cx]="point.x" [attr.cy]="point.y" r="4" />
+    }
+    @if (tooltip(); as tip) {
+      <g class="chart__tip" aria-hidden="true">
+        <rect [attr.x]="tip.x" [attr.y]="tip.y" [attr.width]="tip.width" height="22" rx="4" />
+        <text [attr.x]="tip.x + tip.width / 2" [attr.y]="tip.y + 15" text-anchor="middle">{{ tip.text }}</text>
+      </g>
+    }
+  </svg>
+
+  <table class="sr-only">
+    <caption>{{ ariaLabel() }}</caption>
+    <thead><tr><th scope="col">Hora</th><th scope="col">{{ unit() || 'Valor' }}</th></tr></thead>
+    <tbody>
+      @for (point of points(); track point.label) {
+        <tr><th scope="row">{{ point.label }}</th><td>{{ point.value }}</td></tr>
+      }
+    </tbody>
+  </table>
+</figure>
