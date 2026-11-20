@@ -1,0 +1,107 @@
+<section class="card panel" aria-labelledby="search-title">
+  <div class="panel__head">
+    <h2 id="search-title">Buscar ticket</h2>
+    <button type="button" class="btn btn--primary" (click)="openManual()">Registrar pago</button>
+  </div>
+  <form class="search" (submit)="$event.preventDefault(); search()" novalidate>
+    <label for="ticket-code" class="sr-only">Número de ticket o código QR</label>
+    <input
+      id="ticket-code"
+      type="text"
+      [formControl]="codeControl"
+      placeholder="Nro. de ticket (TKT-…) o código QR"
+      autocomplete="off"
+      spellcheck="false"
+    />
+    <button type="submit" class="btn btn--primary" [disabled]="searching()">
+      {{ searching() ? 'Buscando…' : 'Buscar' }}
+    </button>
+  </form>
+  @if (sampleTickets.length) {
+    <p class="hint">Pruebe: {{ sampleTickets.join(' o ') }}</p>
+  }
+
+  @if (searchError(); as message) {
+    <p class="result result--error" role="alert">{{ message }}</p>
+  }
+
+  @if (ticket(); as found) {
+    <div class="result" aria-live="polite">
+      <div class="result__head">
+        <span class="result__number">{{ found.ticketNumber }}</span>
+        <app-status-badge [variant]="statusVariant(found.status)">{{ statusLabel(found.status) }}</app-status-badge>
+      </div>
+      <dl class="result__grid">
+        <div><dt>Ingreso</dt><dd>{{ found.entryAt | dateTimeAr }}</dd></div>
+        <div><dt>Días a cobrar</dt><dd>{{ found.days }}</dd></div>
+        <div><dt>Tarifa por día</dt><dd>{{ found.dailyRate | currencyAr }}</dd></div>
+        <div><dt>Total a cobrar</dt><dd class="result__total">{{ found.amountDue | currencyAr }}</dd></div>
+      </dl>
+      @if (found.status === 'PENDING') {
+        <button type="button" class="btn btn--primary" (click)="askCharge()">Registrar cobro en efectivo</button>
+      } @else {
+        <p class="result__paid">Este ticket ya fue cobrado.</p>
+      }
+    </div>
+  }
+</section>
+
+<section class="card panel panel--table" aria-labelledby="today-title">
+  <h2 id="today-title" class="table-title">Cobros realizados hoy</h2>
+  <app-async-state
+    [status]="status()"
+    [error]="error()"
+    loadingMessage="Cargando cobros…"
+    emptyTitle="Todavía no se registraron cobros hoy"
+    (retry)="reload()"
+  >
+    <div class="table-scroll">
+      <table class="payments">
+        <caption class="sr-only">Cobros realizados hoy</caption>
+        <thead>
+          <tr>
+            <th scope="col" appSortHeader="ticketNumber" [sort]="sort()" (sortChange)="changeSort($event)">Ticket</th>
+            <th scope="col" appSortHeader="paidAt" [sort]="sort()" (sortChange)="changeSort($event)">Hora</th>
+            <th scope="col" appSortHeader="amount" [sort]="sort()" (sortChange)="changeSort($event)">Monto</th>
+            <th scope="col" appSortHeader="method" [sort]="sort()" (sortChange)="changeSort($event)">Método</th>
+            <th scope="col" appSortHeader="cashierName" [sort]="sort()" (sortChange)="changeSort($event)">Cajero</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (payment of today()?.items; track payment.id) {
+            <tr>
+              <td class="mono">{{ payment.ticketNumber }}</td>
+              <td class="mono">{{ payment.paidAt | dateTimeAr: 'time' }}</td>
+              <td class="amount">{{ payment.amount | currencyAr }}</td>
+              <td class="muted">{{ methodLabel(payment.method) }}</td>
+              <td class="muted">{{ payment.cashierName }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (today(); as summary) {
+      <footer class="summary">
+        <span>{{ countLabel(summary.count) }}</span>
+        <strong>Total: {{ summary.totalAmount | currencyAr }}</strong>
+      </footer>
+    }
+  </app-async-state>
+</section>
+
+<app-payment-form-modal
+  [open]="manualOpen()"
+  [saving]="manualSaving()"
+  [error]="manualError()"
+  (submitted)="registerManual($event)"
+  (closed)="closeManual()"
+/>
+
+<app-confirm-dialog
+  [open]="confirming()"
+  title="Confirmar cobro"
+  [message]="confirmMessage()"
+  confirmLabel="Registrar cobro"
+  (confirmed)="confirmCharge()"
+  (cancelled)="cancelCharge()"
+/>
