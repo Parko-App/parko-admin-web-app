@@ -1,0 +1,170 @@
+<app-async-state [status]="status()" [error]="error()" loadingMessage="Cargando la configuración…" (retry)="load()">
+  <form class="settings" [formGroup]="form" (submit)="$event.preventDefault(); requestSave()" novalidate>
+    <section class="card panel" aria-labelledby="rates-title">
+      <header class="panel__head">
+        <h2 id="rates-title">Tarifas del estacionamiento</h2>
+        <p>Valores diarios en pesos argentinos. Los cambios se aplican a partir del próximo acceso.</p>
+      </header>
+      <div class="panel__body grid">
+        <fieldset class="group">
+          <legend>Usuarios registrados</legend>
+          <div class="field">
+            <label for="registeredDailyRate">Costo por día</label>
+            <div class="input input--prefix">
+              <span class="affix" aria-hidden="true">$</span>
+              <input id="registeredDailyRate" type="number" inputmode="decimal" min="1" formControlName="registeredDailyRate" [attr.aria-invalid]="errorOf('registeredDailyRate') !== null" [attr.aria-describedby]="errorOf('registeredDailyRate') ? 'registeredDailyRate-error' : null" />
+            </div>
+            @if (errorOf('registeredDailyRate'); as message) { <p class="field__error" id="registeredDailyRate-error">{{ message }}</p> }
+          </div>
+        </fieldset>
+
+        <fieldset class="group">
+          <legend>Visitantes</legend>
+          <div class="field">
+            <label for="visitorDailyRate">Costo por día visitante</label>
+            <div class="input input--prefix">
+              <span class="affix" aria-hidden="true">$</span>
+              <input id="visitorDailyRate" type="number" inputmode="decimal" min="1" formControlName="visitorDailyRate" [attr.aria-invalid]="errorOf('visitorDailyRate') !== null" [attr.aria-describedby]="errorOf('visitorDailyRate') ? 'visitorDailyRate-error' : null" />
+            </div>
+            @if (errorOf('visitorDailyRate'); as message) { <p class="field__error" id="visitorDailyRate-error">{{ message }}</p> }
+          </div>
+        </fieldset>
+
+        <fieldset class="group group--wide">
+          <legend>Motos</legend>
+          <div class="pair">
+            <div class="field">
+              <label for="motorcycleDailyRate">Costo por día moto</label>
+              <div class="input input--prefix">
+                <span class="affix" aria-hidden="true">$</span>
+                <input id="motorcycleDailyRate" type="number" inputmode="decimal" min="1" formControlName="motorcycleDailyRate" [attr.aria-invalid]="errorOf('motorcycleDailyRate') !== null" [attr.aria-describedby]="errorOf('motorcycleDailyRate') ? 'motorcycleDailyRate-error' : null" />
+              </div>
+              @if (errorOf('motorcycleDailyRate'); as message) { <p class="field__error" id="motorcycleDailyRate-error">{{ message }}</p> }
+            </div>
+            <div class="field">
+              <label for="motorcycleDiscountPercent">Descuento sobre automóvil</label>
+              <div class="input input--suffix">
+                <input id="motorcycleDiscountPercent" type="number" inputmode="numeric" min="0" max="100" formControlName="motorcycleDiscountPercent" [attr.aria-invalid]="errorOf('motorcycleDiscountPercent') !== null" [attr.aria-describedby]="errorOf('motorcycleDiscountPercent') ? 'motorcycleDiscountPercent-error' : null" />
+                <span class="affix" aria-hidden="true">%</span>
+              </div>
+              @if (errorOf('motorcycleDiscountPercent'); as message) { <p class="field__error" id="motorcycleDiscountPercent-error">{{ message }}</p> }
+            </div>
+          </div>
+        </fieldset>
+      </div>
+    </section>
+
+    <section class="card panel" aria-labelledby="params-title">
+      <header class="panel__head">
+        <h2 id="params-title">Parámetros del sistema</h2>
+        <p>Límites operativos y configuración general del estacionamiento.</p>
+      </header>
+      <div class="panel__body grid">
+        <fieldset class="group group--wide" formGroupName="plateLimits">
+          <legend>Límite de patentes por usuario</legend>
+          <div class="triple">
+            <div class="field">
+              <label for="limitStudents">Alumnos</label>
+              <div class="input input--suffix">
+                <input id="limitStudents" type="number" inputmode="numeric" min="1" formControlName="students" [attr.aria-invalid]="errorOf('plateLimits.students') !== null" [attr.aria-describedby]="errorOf('plateLimits.students') ? 'limitStudents-error' : null" />
+                <span class="affix" aria-hidden="true">pat.</span>
+              </div>
+              @if (errorOf('plateLimits.students'); as message) { <p class="field__error" id="limitStudents-error">{{ message }}</p> }
+            </div>
+            <div class="field">
+              <label for="limitTeachers">Docentes</label>
+              <div class="input input--suffix">
+                <input id="limitTeachers" type="number" inputmode="numeric" min="1" formControlName="teachers" [attr.aria-invalid]="errorOf('plateLimits.teachers') !== null" [attr.aria-describedby]="errorOf('plateLimits.teachers') ? 'limitTeachers-error' : null" />
+                <span class="affix" aria-hidden="true">pat.</span>
+              </div>
+              @if (errorOf('plateLimits.teachers'); as message) { <p class="field__error" id="limitTeachers-error">{{ message }}</p> }
+            </div>
+            <div class="field">
+              <label for="limitStaff">Personal</label>
+              <div class="input input--suffix">
+                <input id="limitStaff" type="number" inputmode="numeric" min="1" formControlName="staff" [attr.aria-invalid]="errorOf('plateLimits.staff') !== null" [attr.aria-describedby]="errorOf('plateLimits.staff') ? 'limitStaff-error' : null" />
+                <span class="affix" aria-hidden="true">pat.</span>
+              </div>
+              @if (errorOf('plateLimits.staff'); as message) { <p class="field__error" id="limitStaff-error">{{ message }}</p> }
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="group">
+          <legend>Capacidad</legend>
+          <div class="field">
+            <label for="totalCapacity">Capacidad total</label>
+            <div class="input input--suffix">
+              <input id="totalCapacity" type="number" inputmode="numeric" min="1" formControlName="totalCapacity" [attr.aria-invalid]="errorOf('totalCapacity') !== null" [attr.aria-describedby]="errorOf('totalCapacity') ? 'totalCapacity-error' : null" />
+              <span class="affix" aria-hidden="true">esp.</span>
+            </div>
+            @if (errorOf('totalCapacity'); as message) { <p class="field__error" id="totalCapacity-error">{{ message }}</p> }
+          </div>
+        </fieldset>
+
+        <fieldset class="group group--full" formGroupName="schedule">
+          <legend>Horario de operación</legend>
+          <div class="quad">
+            <div class="field" formGroupName="weekdays">
+              <label for="weekdaysOpen">Apertura lun–vie</label>
+              <input id="weekdaysOpen" type="time" formControlName="open" class="plain" [attr.aria-invalid]="errorOf('schedule.weekdays.open') !== null || scheduleError('schedule.weekdays') !== null" />
+              @if (errorOf('schedule.weekdays.open'); as message) { <p class="field__error">{{ message }}</p> }
+            </div>
+            <div class="field" formGroupName="weekdays">
+              <label for="weekdaysClose">Cierre lun–vie</label>
+              <input id="weekdaysClose" type="time" formControlName="close" class="plain" [attr.aria-invalid]="errorOf('schedule.weekdays.close') !== null || scheduleError('schedule.weekdays') !== null" [attr.aria-describedby]="scheduleError('schedule.weekdays') ? 'weekdays-error' : null" />
+              @if (errorOf('schedule.weekdays.close'); as message) { <p class="field__error">{{ message }}</p> }
+              @if (scheduleError('schedule.weekdays'); as message) { <p class="field__error" id="weekdays-error">{{ message }}</p> }
+            </div>
+            <div class="field" formGroupName="saturday">
+              <label for="saturdayOpen">Apertura sáb</label>
+              <input id="saturdayOpen" type="time" formControlName="open" class="plain" [attr.aria-invalid]="errorOf('schedule.saturday.open') !== null || scheduleError('schedule.saturday') !== null" />
+              @if (errorOf('schedule.saturday.open'); as message) { <p class="field__error">{{ message }}</p> }
+            </div>
+            <div class="field" formGroupName="saturday">
+              <label for="saturdayClose">Cierre sáb</label>
+              <input id="saturdayClose" type="time" formControlName="close" class="plain" [attr.aria-invalid]="errorOf('schedule.saturday.close') !== null || scheduleError('schedule.saturday') !== null" [attr.aria-describedby]="scheduleError('schedule.saturday') ? 'saturday-error' : null" />
+              @if (errorOf('schedule.saturday.close'); as message) { <p class="field__error">{{ message }}</p> }
+              @if (scheduleError('schedule.saturday'); as message) { <p class="field__error" id="saturday-error">{{ message }}</p> }
+            </div>
+          </div>
+        </fieldset>
+      </div>
+    </section>
+
+    <footer class="actions">
+      <p class="notice" role="note">
+        <span aria-hidden="true">⚠</span>
+        Los cambios de tarifas y parámetros son auditados. Asegurate de verificar los valores antes de guardar.
+      </p>
+      @if (submitted() && form.invalid) {
+        <p class="actions__error" role="alert">Revisá los campos marcados antes de guardar.</p>
+      }
+      <div class="actions__buttons">
+        <button type="button" class="btn" [disabled]="changes().length === 0 || saving()" (click)="discard()">Descartar cambios</button>
+        <button type="submit" class="btn btn--primary" [disabled]="changes().length === 0 || saving()">Guardar configuración</button>
+      </div>
+    </footer>
+  </form>
+</app-async-state>
+
+<app-modal [open]="confirming()" title="Confirmar cambios" size="sm" (closed)="cancelSave()">
+  <p class="confirm__intro">
+    Vas a guardar {{ changes().length === 1 ? 'el siguiente cambio' : 'los siguientes ' + changes().length + ' cambios' }}.
+    Quedan registrados en la auditoría y se aplican a partir del próximo acceso.
+  </p>
+  <ul class="confirm__list">
+    @for (change of changes(); track change.label) {
+      <li>
+        <span class="confirm__label">{{ change.label }}</span>
+        <span class="confirm__values"><s>{{ change.from }}</s> → <strong>{{ change.to }}</strong></span>
+      </li>
+    }
+  </ul>
+  <ng-container modalFooter>
+    <button type="button" class="btn" [disabled]="saving()" (click)="cancelSave()">Cancelar</button>
+    <button type="button" class="btn btn--primary" [disabled]="saving()" (click)="confirmSave()">
+      {{ saving() ? 'Guardando…' : 'Confirmar y guardar' }}
+    </button>
+  </ng-container>
+</app-modal>

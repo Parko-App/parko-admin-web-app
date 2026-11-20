@@ -4,16 +4,11 @@ import { DASHBOARD_SERVICE_PROVIDER } from './features/dashboard/dashboard.servi
 import { USERS_SERVICE_PROVIDER } from './features/users/users.service';
 import { VEHICLES_SERVICE_PROVIDER } from './features/vehicles/vehicles.service';
 import { ACCESS_SERVICE_PROVIDER } from './features/access/access.service';
+import { SETTINGS_SERVICE_PROVIDER } from './features/settings/settings.service';
 import { REPORTS_SERVICE_PROVIDER } from './features/reports/reports.service';
 import { PAYMENTS_SERVICE_PROVIDER } from './features/payments/payments.service';
 import { AdminLayoutComponent } from './layout/admin-layout/admin-layout.component';
 
-const underConstruction = () =>
-  import('./shared/components/under-construction/under-construction.component').then(
-    (m) => m.UnderConstructionComponent,
-  );
-
-// Cada sección reemplaza su loadComponent cuando se desarrolla su pantalla.
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'admin/dashboard' },
   {
@@ -70,7 +65,12 @@ export const routes: Routes = [
         providers: [ACCESS_SERVICE_PROVIDER],
         loadComponent: () => import('./features/access/access.component').then((m) => m.AccessComponent),
       },
-      { path: 'configuracion', title: 'Configuración del Sistema', loadComponent: underConstruction },
+      {
+        path: 'configuracion',
+        title: 'Configuración del Sistema',
+        providers: [SETTINGS_SERVICE_PROVIDER],
+        loadComponent: () => import('./features/settings/settings.component').then((m) => m.SettingsComponent),
+      },
     ],
   },
   { path: '**', redirectTo: 'admin/dashboard' },
