@@ -1,4 +1,4 @@
-import { DestroyRef, computed, inject, signal } from '@angular/core';
+import { DestroyRef, WritableSignal, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl } from '@angular/forms';
 import { Observable, Subject, catchError, debounceTime, distinctUntilChanged, merge, of, switchMap, tap } from 'rxjs';
@@ -12,6 +12,8 @@ export interface ListQuery {
   page: number;
   size: number;
   sort: SortState | null;
+  /** Filtros adicionales de la pantalla (por ejemplo, movement=ENTRY). Vacíos no se envían. */
+  filters?: Record<string, string>;
 }
 
 /**
@@ -28,8 +30,9 @@ export class PagedList<T> {
   readonly error = signal<string | null>(null);
   readonly data = signal<PageResponse<T> | null>(null);
   readonly page = signal(0);
-  readonly sort = signal<SortState | null>(null);
+  readonly sort: WritableSignal<SortState | null>;
   readonly search = signal('');
+  readonly filters = signal<Record<string, string>>({});
 
   readonly items = computed(() => this.data()?.content ?? []);
   readonly total = computed(() => this.data()?.totalElements ?? 0);
@@ -37,12 +40,20 @@ export class PagedList<T> {
   constructor(
     fetch: (query: ListQuery) => Observable<PageResponse<T>>,
     private readonly pageSize = 10,
+    initialSort: SortState | null = null,
   ) {
+    this.sort = signal(initialSort);
     merge(of(undefined), this.reload$)
       .pipe(
         tap(() => this.status.set('loading')),
         switchMap(() =>
-          fetch({ search: this.search(), page: this.page(), size: this.pageSize, sort: this.sort() }).pipe(
+          fetch({
+            search: this.search(),
+            page: this.page(),
+            size: this.pageSize,
+            sort: this.sort(),
+            filters: this.filters(),
+          }).pipe(
             tap((page) => {
               this.data.set(page);
               this.error.set(null);
@@ -71,6 +82,13 @@ export class PagedList<T> {
 
   changeSort(sort: SortState): void {
     this.sort.set(sort);
+    this.page.set(0);
+    this.reload();
+  }
+
+  /** Cambia un filtro (cadena vacía = sin filtrar) y vuelve a la primera página. */
+  setFilter(key: string, value: string): void {
+    this.filters.update((current) => ({ ...current, [key]: value }));
     this.page.set(0);
     this.reload();
   }

@@ -6,7 +6,6 @@ import { toErrorMessage } from '../../core/http/error-message';
 import { SortState } from '../../core/models/sort.model';
 import { AccessMovement, AccessUserType, RecentAccess } from '../../core/models/dashboard.model';
 import { DashboardSummary } from '../../core/models/dashboard.model';
-import { NavBadgesService } from '../../layout/nav-badges.service';
 import { AsyncStateComponent } from '../../shared/components/async-state/async-state.component';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
 import { IconComponent } from '../../shared/components/icon/icon.component';
@@ -65,7 +64,6 @@ const ACCESS_SORT: Record<string, (row: RecentAccess) => unknown> = {
 })
 export class DashboardComponent {
   private readonly service = inject(DashboardService);
-  private readonly badges = inject(NavBadgesService);
   private readonly reload$ = new Subject<void>();
 
   protected readonly status = signal<AsyncStatus>('loading');
@@ -156,7 +154,6 @@ export class DashboardComponent {
         this.error.set(null);
         this.refreshFailed.set(false);
         this.status.set('success');
-        this.badges.openIncidents.set(summary.dayStats.openIncidents);
       }),
       map(() => undefined),
       catchError((error: unknown) => {

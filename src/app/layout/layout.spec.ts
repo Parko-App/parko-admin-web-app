@@ -6,7 +6,6 @@ import { Router, provideRouter } from '@angular/router';
 import { AdminLayoutComponent } from './admin-layout/admin-layout.component';
 import { SidebarComponent } from './sidebar/sidebar.component';
 import { TopbarComponent } from './topbar/topbar.component';
-import { NavBadgesService } from './nav-badges.service';
 import { routes } from '../app.routes';
 import { provideHttpClient } from '@angular/common/http';
 import { AuthService } from '../core/auth/auth.service';
@@ -29,7 +28,7 @@ describe('Layout administrativo', () => {
     await fixture.whenStable();
     const el: HTMLElement = fixture.nativeElement;
     const labels = Array.from(el.querySelectorAll('.nav-link__label')).map((n) => n.textContent?.trim());
-    expect(labels).toEqual(['Dashboard', 'Usuarios', 'Vehículos', 'Pagos', 'Reportes', 'Incidencias', 'Configuración']);
+    expect(labels).toEqual(['Dashboard', 'Usuarios', 'Vehículos', 'Pagos', 'Reportes', 'Accesos', 'Configuración']);
     expect(el.textContent).not.toContain('Llaves');
     expect(el.textContent).toContain('Cerrar sesión');
   });
@@ -57,13 +56,6 @@ describe('Layout administrativo', () => {
     expect(el.querySelector('h1')?.textContent).toContain('Gestión de Usuarios');
     expect(el.querySelector('time')?.textContent).toMatch(/ de .* de \d{4}/);
     expect(el.textContent).toContain('Sistema operativo');
-  });
-
-  it('oculta el contador de incidencias cuando es 0', async () => {
-    TestBed.inject(NavBadgesService).openIncidents.set(0);
-    const fixture = TestBed.createComponent(SidebarComponent);
-    await fixture.whenStable();
-    expect(fixture.nativeElement.querySelector('.nav-link__badge')).toBeNull();
   });
 
   it('redirige la raíz al dashboard dentro del layout', async () => {

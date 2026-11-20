@@ -1,0 +1,87 @@
+<div class="toolbar">
+  <div class="filters">
+    <div class="field field--search">
+      <label for="plate-search" class="sr-only">Buscar por patente</label>
+      <input
+        id="plate-search"
+        type="search"
+        [formControl]="searchControl"
+        placeholder="Buscar por patente…"
+        autocomplete="off"
+        spellcheck="false"
+      />
+    </div>
+    <div class="field">
+      <label for="movement-filter" class="sr-only">Filtrar por movimiento</label>
+      <select id="movement-filter" [formControl]="movementControl" (change)="setMovement()">
+        <option value="">Todos los movimientos</option>
+        @for (item of movements; track item[0]) {
+          <option [value]="item[0]">{{ item[1] }}s</option>
+        }
+      </select>
+    </div>
+    @if (filtering()) {
+      <button type="button" class="link" (click)="clearFilters()">Limpiar filtros</button>
+    }
+  </div>
+  <button type="button" class="btn" [disabled]="list.status() === 'loading'" (click)="refresh()">Actualizar</button>
+</div>
+
+<section class="card list" aria-label="Ingresos y egresos recientes">
+  <app-async-state
+    [status]="list.status()"
+    [error]="list.error()"
+    loadingMessage="Cargando movimientos…"
+    [emptyTitle]="filtering() ? 'No se encontraron movimientos' : 'Todavía no hay movimientos registrados'"
+    [emptyDescription]="filtering() ? 'Probá con otra patente o quitá los filtros.' : ''"
+    (retry)="list.reload()"
+  >
+    <div class="table-scroll">
+      <table class="access">
+        <caption class="sr-only">Ingresos y egresos recientes</caption>
+        <thead>
+          <tr>
+            <th scope="col" appSortHeader="plate" [sort]="list.sort()" (sortChange)="list.changeSort($event)">Patente</th>
+            <th scope="col" appSortHeader="movement" [sort]="list.sort()" (sortChange)="list.changeSort($event)">Movimiento</th>
+            <th scope="col" appSortHeader="timestamp" [sort]="list.sort()" (sortChange)="list.changeSort($event)">Fecha y hora</th>
+            <th scope="col" appSortHeader="userName" [sort]="list.sort()" (sortChange)="list.changeSort($event)">Usuario</th>
+            <th scope="col" appSortHeader="userType" [sort]="list.sort()" (sortChange)="list.changeSort($event)">Tipo de usuario</th>
+            <th scope="col" appSortHeader="method" [sort]="list.sort()" (sortChange)="list.changeSort($event)">Método</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (record of list.items(); track record.id) {
+            <tr>
+              @if (record.plate) {
+                <td class="plate">{{ record.plate | plate }}</td>
+              } @else {
+                <td class="muted">Sin patente</td>
+              }
+              <td [class]="'movement movement--' + (record.movement === 'ENTRY' ? 'entry' : 'exit')">
+                <span aria-hidden="true">{{ movementArrow(record.movement) }}</span>
+                {{ movementLabel(record.movement) }}
+              </td>
+              <td class="muted">{{ record.timestamp | dateTimeAr }}</td>
+              <td class="user">{{ record.userName }}</td>
+              <td>
+                <app-status-badge [variant]="userTypeVariant(record.userType)">{{ userTypeLabel(record.userType) }}</app-status-badge>
+              </td>
+              <td class="muted">{{ methodLabel(record.method) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (list.data(); as page) {
+      @if (page.totalPages > 1) {
+        <app-pagination
+          [page]="page.page"
+          [size]="page.size"
+          [totalElements]="page.totalElements"
+          [totalPages]="page.totalPages"
+          (pageChange)="list.goToPage($event)"
+        />
+      }
+    }
+  </app-async-state>
+</section>

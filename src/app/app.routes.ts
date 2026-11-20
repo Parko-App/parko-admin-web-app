@@ -3,6 +3,7 @@ import { authGuard, guestGuard } from './core/auth/auth.guard';
 import { DASHBOARD_SERVICE_PROVIDER } from './features/dashboard/dashboard.service';
 import { USERS_SERVICE_PROVIDER } from './features/users/users.service';
 import { VEHICLES_SERVICE_PROVIDER } from './features/vehicles/vehicles.service';
+import { ACCESS_SERVICE_PROVIDER } from './features/access/access.service';
 import { REPORTS_SERVICE_PROVIDER } from './features/reports/reports.service';
 import { PAYMENTS_SERVICE_PROVIDER } from './features/payments/payments.service';
 import { AdminLayoutComponent } from './layout/admin-layout/admin-layout.component';
@@ -63,7 +64,12 @@ export const routes: Routes = [
         providers: [REPORTS_SERVICE_PROVIDER],
         loadComponent: () => import('./features/reports/reports.component').then((m) => m.ReportsComponent),
       },
-      { path: 'incidencias', title: 'Gestión de Incidencias', loadComponent: underConstruction },
+      {
+        path: 'accesos',
+        title: 'Ingresos y Egresos',
+        providers: [ACCESS_SERVICE_PROVIDER],
+        loadComponent: () => import('./features/access/access.component').then((m) => m.AccessComponent),
+      },
       { path: 'configuracion', title: 'Configuración del Sistema', loadComponent: underConstruction },
     ],
   },
