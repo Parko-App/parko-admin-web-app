@@ -5,7 +5,6 @@ import { LOCALE_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Observable, of, throwError } from 'rxjs';
 import { DashboardSummary, RecentAccess } from '../../core/models/dashboard.model';
-import { NavBadgesService } from '../../layout/nav-badges.service';
 import { KpiCardComponent } from '../../shared/components/kpi-card/kpi-card.component';
 import { LineChartComponent } from '../../shared/components/line-chart/line-chart.component';
 import { DashboardComponent } from './dashboard.component';
@@ -58,11 +57,10 @@ describe('DashboardComponent', () => {
     expect(text).toContain('10:47');
   });
 
-  it('clasifica la ocupación y actualiza el contador de incidencias del sidebar', async () => {
+  it('clasifica la ocupación según el porcentaje de capacidad', async () => {
     const { fixture, el } = setup(new MockDashboardService());
     await settle(fixture);
     expect(el.querySelector('app-kpi-card app-status-badge')?.textContent).toContain('Alta');
-    expect(TestBed.inject(NavBadgesService).openIncidents()).toBe(3);
   });
 
   it('muestra el error y permite reintentar', async () => {

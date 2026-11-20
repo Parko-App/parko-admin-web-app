@@ -20,11 +20,6 @@
           >
             <app-icon [name]="item.icon" />
             <span class="nav-link__label">{{ item.label }}</span>
-            @if (item.badge === 'incidents' && badges.openIncidents() > 0) {
-              <span class="nav-link__badge" [attr.aria-label]="badges.openIncidents() + ' incidencias abiertas'">
-                {{ badges.openIncidents() }}
-              </span>
-            }
           </a>
         </li>
       }

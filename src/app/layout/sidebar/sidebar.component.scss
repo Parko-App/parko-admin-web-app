@@ -148,15 +148,4 @@
   &__label {
     flex: 1;
   }
-
-  &__badge {
-    min-width: 20px;
-    padding: 1px 6px;
-    border-radius: 999px;
-    background: var(--color-danger);
-    color: #fff;
-    font-size: 11px;
-    font-weight: 600;
-    text-align: center;
-  }
 }
