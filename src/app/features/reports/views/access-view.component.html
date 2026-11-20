@@ -1,0 +1,34 @@
+<section class="card chart-card" aria-label="Gráfico de accesos">
+  <h2>Accesos</h2>
+  <p class="range">{{ rangeText() }}</p>
+  <app-multi-line-chart [labels]="labels()" [series]="series()" [ariaLabel]="ariaLabel()" />
+</section>
+
+<section class="card table-card" aria-label="Detalle por día">
+  <h2>Detalle por día</h2>
+  <div class="table-scroll">
+    <table class="report-table">
+      <caption class="sr-only">Accesos por día</caption>
+      <thead>
+        <tr>
+          <th scope="col" appSortHeader="date" [sort]="sort()" (sortChange)="sort.set($event)">Fecha</th>
+          <th scope="col" appSortHeader="entries" [sort]="sort()" (sortChange)="sort.set($event)">Ingresos</th>
+          <th scope="col" appSortHeader="exits" [sort]="sort()" (sortChange)="sort.set($event)">Egresos</th>
+          <th scope="col" appSortHeader="visitors" [sort]="sort()" (sortChange)="sort.set($event)">Visitantes</th>
+          <th scope="col" appSortHeader="registered" [sort]="sort()" (sortChange)="sort.set($event)">Registrados</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.date) {
+          <tr>
+            <td>{{ day(row.date) }}</td>
+            <td class="success">{{ row.entries }}</td>
+            <td class="orange">{{ row.exits }}</td>
+            <td class="muted">{{ row.visitors }}</td>
+            <td class="muted">{{ row.registered }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

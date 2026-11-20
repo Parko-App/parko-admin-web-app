@@ -1,0 +1,44 @@
+<section class="card chart-card" aria-label="Gráfico de recaudación">
+  <h2>Recaudación</h2>
+  <p class="range">{{ rangeText() }}</p>
+  <app-bar-chart mode="stacked" [labels]="labels()" [series]="series()" [formatValue]="formatAxis" [ariaLabel]="ariaLabel()" />
+</section>
+
+<section class="kpis" aria-label="Resumen de recaudación">
+  <app-kpi-card label="Total del período" hint="Registrados + visitantes">
+    {{ summary().total | currencyAr }}
+  </app-kpi-card>
+  <app-kpi-card label="Promedio diario" hint="Días hábiles y fin de semana">
+    {{ summary().dailyAverage | currencyAr: '1.0-0' }}
+  </app-kpi-card>
+  <app-kpi-card label="Día de mayor recaudación" [hint]="(summary().best?.total | currencyAr) + ' recaudados'">
+    {{ summary().best ? longDay(summary().best!.date) : '—' }}
+  </app-kpi-card>
+</section>
+
+<section class="card table-card" aria-label="Detalle por día">
+  <h2>Detalle por día</h2>
+  <div class="table-scroll">
+    <table class="report-table">
+      <caption class="sr-only">Recaudación por día</caption>
+      <thead>
+        <tr>
+          <th scope="col" appSortHeader="date" [sort]="sort()" (sortChange)="sort.set($event)">Fecha</th>
+          <th scope="col" appSortHeader="registered" [sort]="sort()" (sortChange)="sort.set($event)">Registrados</th>
+          <th scope="col" appSortHeader="visitors" [sort]="sort()" (sortChange)="sort.set($event)">Visitantes</th>
+          <th scope="col" appSortHeader="total" [sort]="sort()" (sortChange)="sort.set($event)">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.date) {
+          <tr>
+            <td>{{ day(row.date) }}</td>
+            <td class="mono">{{ row.registered | currencyAr }}</td>
+            <td class="mono">{{ row.visitors | currencyAr }}</td>
+            <td class="mono strong">{{ row.total | currencyAr }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

@@ -39,3 +39,35 @@ body {
 .table-scroll {
   overflow-x: auto;
 }
+
+// Impresión / "Guardar como PDF": solo el contenido de la pantalla, sin menú ni barra superior.
+@media print {
+  app-sidebar,
+  app-topbar,
+  app-toast-container,
+  .skip-link,
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .admin-layout {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .admin-layout__content {
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+
+  .card {
+    break-inside: avoid;
+  }
+}
