@@ -76,6 +76,30 @@ describe('DashboardComponent', () => {
   });
 });
 
+describe('Tabla de últimos accesos ordenable', () => {
+  const ids = (el: HTMLElement) =>
+    Array.from(el.querySelectorAll('.access tbody tr td:first-child')).map((td) => td.textContent?.trim());
+
+  it('ordena por hora y por patente (los vacíos quedan al final)', async () => {
+    const { fixture, el } = setup(new MockDashboardService());
+    await settle(fixture);
+    expect(ids(el)[0]).toBe('A-8821'); // orden original: más reciente primero
+
+    (el.querySelector('th[appSortHeader="timestamp"] button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(ids(el)[0]).toBe('A-8816'); // 09:41 es la más temprana
+
+    (el.querySelector('th[appSortHeader="plate"] button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(ids(el)[0]).toBe('A-8821'); // AB 123 CD
+    expect(ids(el).slice(-2)).toEqual(expect.arrayContaining(['V-0043', 'V-0042']));
+
+    (el.querySelector('th[appSortHeader="plate"] button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(ids(el).slice(-2)).toEqual(expect.arrayContaining(['V-0043', 'V-0042']));
+  });
+});
+
 describe('LineChartComponent', () => {
   function chart(points: { label: string; value: number }[]) {
     TestBed.configureTestingModule({ imports: [LineChartComponent] });
