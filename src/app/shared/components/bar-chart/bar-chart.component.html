@@ -1,0 +1,43 @@
+<figure class="chart">
+  <svg [attr.viewBox]="'0 0 ' + width + ' ' + height" role="img" [attr.aria-label]="ariaLabel()">
+    @for (tick of yTicks(); track $index) {
+      <line class="chart__grid" [attr.x1]="plotLeft" [attr.x2]="plotRight" [attr.y1]="tick.y" [attr.y2]="tick.y" />
+      <text class="chart__axis" [attr.x]="plotLeft - 8" [attr.y]="tick.y + 3" text-anchor="end">{{ formatValue()(tick.value) }}</text>
+    }
+
+    @for (group of groups(); track group.label) {
+      @for (bar of group.bars; track bar.name) {
+        <rect class="chart__bar" [attr.x]="bar.x" [attr.y]="bar.y" [attr.width]="bar.width" [attr.height]="bar.height" [attr.fill]="bar.color">
+          <title>{{ group.label }} · {{ bar.name }}: {{ formatValue()(bar.value) }}</title>
+        </rect>
+      }
+      @if (group.showLabel) {
+        <text class="chart__axis" [attr.x]="group.labelX" [attr.y]="labelY" text-anchor="middle">{{ group.label }}</text>
+      }
+    }
+  </svg>
+
+  <ul class="legend">
+    @for (item of series(); track item.name) {
+      <li><span class="legend__swatch" [style.background]="item.color"></span>{{ item.name }}</li>
+    }
+  </ul>
+
+  <table class="sr-only">
+    <caption>{{ ariaLabel() }}</caption>
+    <thead>
+      <tr>
+        <th scope="col">Fecha</th>
+        @for (item of series(); track item.name) { <th scope="col">{{ item.name }}</th> }
+      </tr>
+    </thead>
+    <tbody>
+      @for (group of groups(); track group.label) {
+        <tr>
+          <th scope="row">{{ group.label }}</th>
+          @for (bar of group.bars; track bar.name) { <td>{{ formatValue()(bar.value) }}</td> }
+        </tr>
+      }
+    </tbody>
+  </table>
+</figure>

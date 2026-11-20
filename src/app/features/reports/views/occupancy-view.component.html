@@ -1,0 +1,34 @@
+<section class="card chart-card" aria-label="Gráfico de ocupación histórica">
+  <h2>Ocupación histórica</h2>
+  <p class="range">{{ rangeText() }}</p>
+  <app-bar-chart [labels]="labels()" [series]="series()" [max]="report().capacity" [ariaLabel]="ariaLabel()" />
+</section>
+
+<section class="card table-card" aria-label="Detalle por día">
+  <h2>Detalle por día</h2>
+  <div class="table-scroll">
+    <table class="report-table">
+      <caption class="sr-only">Ocupación por día</caption>
+      <thead>
+        <tr>
+          <th scope="col" appSortHeader="date" [sort]="sort()" (sortChange)="sort.set($event)">Fecha</th>
+          <th scope="col" appSortHeader="peak" [sort]="sort()" (sortChange)="sort.set($event)">Ocupación pico</th>
+          <th scope="col" appSortHeader="average" [sort]="sort()" (sortChange)="sort.set($event)">Ocupación promedio</th>
+          <th scope="col" appSortHeader="peakPercent" [sort]="sort()" (sortChange)="sort.set($event)">% Cap. pico</th>
+          <th scope="col" appSortHeader="averagePercent" [sort]="sort()" (sortChange)="sort.set($event)">% Cap. promedio</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.date) {
+          <tr>
+            <td>{{ day(row.date) }}</td>
+            <td class="strong">{{ row.peak }}</td>
+            <td class="muted">{{ row.average }}</td>
+            <td [class.danger]="row.peakPercent >= highThreshold" [class.strong]="row.peakPercent < highThreshold">{{ percent(row.peakPercent) }}</td>
+            <td class="muted">{{ percent(row.averagePercent) }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

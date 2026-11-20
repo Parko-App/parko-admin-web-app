@@ -1,0 +1,24 @@
+.chart {
+  margin: 0;
+
+  svg { display: block; width: 100%; height: auto; }
+  &__grid { stroke: #e5ecf4; stroke-width: 1; stroke-dasharray: 3 3; }
+  &__axis { fill: var(--color-subtle); font-size: 11px; }
+  &__bar:hover { opacity: 0.85; }
+}
+
+.legend {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 11px;
+  color: var(--color-muted);
+
+  li { display: flex; align-items: center; gap: 6px; }
+  &__swatch { width: 10px; height: 10px; border-radius: 2px; }
+}
+
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

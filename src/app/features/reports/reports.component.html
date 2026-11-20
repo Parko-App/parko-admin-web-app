@@ -1,0 +1,59 @@
+<form class="card filters no-print" [formGroup]="form" (submit)="$event.preventDefault(); generate()" novalidate>
+  <div class="field">
+    <label for="report-type">Tipo de reporte</label>
+    <select id="report-type" formControlName="type">
+      @for (item of types; track item[0]) {
+        <option [value]="item[0]">{{ item[1] }}</option>
+      }
+    </select>
+  </div>
+  <div class="field">
+    <label for="report-from">Desde</label>
+    <input id="report-from" type="date" formControlName="from" [max]="maxDate" />
+  </div>
+  <div class="field">
+    <label for="report-to">Hasta</label>
+    <input id="report-to" type="date" formControlName="to" [max]="maxDate" />
+  </div>
+  <button type="submit" class="btn btn--primary" [disabled]="status() === 'loading'">Generar</button>
+
+  <div class="filters__export">
+    <button type="button" class="btn" [disabled]="!canExport()" (click)="exportCsv()">
+      <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2v8m0 0L5 7m3 3 3-3M3 13h10" /></svg>
+      Exportar CSV
+    </button>
+    <button type="button" class="btn" [disabled]="!canExport()" (click)="exportPdf()">
+      <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2v8m0 0L5 7m3 3 3-3M3 13h10" /></svg>
+      Exportar PDF
+    </button>
+  </div>
+
+  @if (rangeError(); as message) {
+    <p class="filters__error" role="alert">{{ message }}</p>
+  }
+</form>
+
+<app-async-state
+  [status]="status()"
+  [error]="error()"
+  loadingMessage="Generando el reporte…"
+  emptyTitle="No hay datos para el período seleccionado"
+  emptyDescription="Probá con otro rango de fechas."
+  (retry)="generate()"
+>
+  @if (result(); as current) {
+    <div class="report">
+      @switch (current.type) {
+        @case ('OCCUPANCY') {
+          <app-occupancy-view [report]="current.data" [range]="current.range" />
+        }
+        @case ('REVENUE') {
+          <app-revenue-view [report]="current.data" [range]="current.range" />
+        }
+        @case ('ACCESS') {
+          <app-access-view [report]="current.data" [range]="current.range" />
+        }
+      }
+    </div>
+  }
+</app-async-state>
