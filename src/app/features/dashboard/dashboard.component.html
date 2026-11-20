@@ -93,16 +93,16 @@
             <caption class="sr-only">Últimos accesos al estacionamiento</caption>
             <thead>
               <tr>
-                <th scope="col">ID</th>
-                <th scope="col">Patente</th>
-                <th scope="col">Usuario</th>
-                <th scope="col">Tipo</th>
-                <th scope="col">Hora</th>
-                <th scope="col">Movimiento</th>
+                <th scope="col" appSortHeader="id" [sort]="sort()" (sortChange)="sort.set($event)">ID</th>
+                <th scope="col" appSortHeader="plate" [sort]="sort()" (sortChange)="sort.set($event)">Patente</th>
+                <th scope="col" appSortHeader="userName" [sort]="sort()" (sortChange)="sort.set($event)">Usuario</th>
+                <th scope="col" appSortHeader="userType" [sort]="sort()" (sortChange)="sort.set($event)">Tipo</th>
+                <th scope="col" appSortHeader="timestamp" [sort]="sort()" (sortChange)="sort.set($event)">Hora</th>
+                <th scope="col" appSortHeader="movement" [sort]="sort()" (sortChange)="sort.set($event)">Movimiento</th>
               </tr>
             </thead>
             <tbody>
-              @for (row of recent(); track row.id) {
+              @for (row of sortedRecent(); track row.id) {
                 <tr>
                   <td class="mono muted">{{ row.id }}</td>
                   <td class="mono strong">{{ row.plate ?? '—' }}</td>

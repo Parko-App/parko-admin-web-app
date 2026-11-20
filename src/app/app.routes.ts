@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard, guestGuard } from './core/auth/auth.guard';
 import { DASHBOARD_SERVICE_PROVIDER } from './features/dashboard/dashboard.service';
+import { USERS_SERVICE_PROVIDER } from './features/users/users.service';
 import { AdminLayoutComponent } from './layout/admin-layout/admin-layout.component';
 
 const underConstruction = () =>
@@ -35,7 +36,12 @@ export const routes: Routes = [
         providers: [DASHBOARD_SERVICE_PROVIDER],
         loadComponent: () => import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
       },
-      { path: 'usuarios', title: 'Gestión de Usuarios', loadComponent: underConstruction },
+      {
+        path: 'usuarios',
+        title: 'Gestión de Usuarios',
+        providers: [USERS_SERVICE_PROVIDER],
+        loadComponent: () => import('./features/users/users.component').then((m) => m.UsersComponent),
+      },
       { path: 'vehiculos', title: 'Gestión de Vehículos', loadComponent: underConstruction },
       { path: 'pagos', title: 'Procesamiento de Pagos', loadComponent: underConstruction },
       { path: 'reportes', title: 'Reportes', loadComponent: underConstruction },

@@ -1,0 +1,21 @@
+.sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+
+  &:hover { color: var(--color-text); }
+  &--active { color: var(--color-primary); }
+
+  &__icon { width: 8px; height: 11px; flex: none; }
+  &__icon path { fill: currentColor; opacity: 0.25; }
+  &:hover &__icon path { opacity: 0.45; }
+  &__icon path.on { opacity: 1; }
+}

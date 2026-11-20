@@ -1,0 +1,97 @@
+<div class="toolbar">
+  <div class="search">
+    <label for="search" class="sr-only">Buscar usuarios</label>
+    <input
+      id="search"
+      type="search"
+      [formControl]="searchControl"
+      placeholder="Buscar por nombre, email o tipo…"
+      autocomplete="off"
+    />
+  </div>
+  <div class="toolbar__right">
+    <span class="toolbar__count" aria-live="polite">{{ total() | number }} usuarios</span>
+    <button type="button" class="btn btn--primary" (click)="openCreate()">+ Nuevo usuario</button>
+  </div>
+</div>
+
+<section class="card list" aria-label="Listado de usuarios">
+  <app-async-state
+    [status]="status()"
+    [error]="error()"
+    loadingMessage="Cargando usuarios…"
+    [emptyTitle]="searchControl.value ? 'No se encontraron usuarios' : 'Todavía no hay usuarios'"
+    [emptyDescription]="searchControl.value ? 'Probá con otro nombre, email o tipo.' : ''"
+    (retry)="reload()"
+  >
+    <div class="table-scroll">
+      <table class="users">
+        <caption class="sr-only">Usuarios registrados</caption>
+        <thead>
+          <tr>
+            <th scope="col" appSortHeader="fullName" [sort]="sort()" (sortChange)="changeSort($event)">Nombre</th>
+            <th scope="col" appSortHeader="email" [sort]="sort()" (sortChange)="changeSort($event)">Correo</th>
+            <th scope="col" appSortHeader="type" [sort]="sort()" (sortChange)="changeSort($event)">Tipo</th>
+            <th scope="col" appSortHeader="balance" [sort]="sort()" (sortChange)="changeSort($event)">Saldo</th>
+            <th scope="col" class="center" appSortHeader="vehicleCount" [sort]="sort()" (sortChange)="changeSort($event)">Patentes</th>
+            <th scope="col" appSortHeader="status" [sort]="sort()" (sortChange)="changeSort($event)">Estado</th>
+            <th scope="col">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of users(); track user.id) {
+            <tr>
+              <td class="name">{{ user.fullName }}</td>
+              <td class="muted">{{ user.email }}</td>
+              <td>
+                <app-status-badge [variant]="typeVariant(user.type)">{{ typeLabel(user.type) }}</app-status-badge>
+              </td>
+              <td class="mono" [class.low]="isLowBalance(user)">
+                {{ user.balance | currencyAr }}
+                @if (isLowBalance(user)) { <span class="sr-only">(saldo bajo)</span> }
+              </td>
+              <td class="center muted">{{ user.vehicleCount }}</td>
+              <td>
+                <app-status-badge [variant]="statusVariant(user.status)">{{ statusLabel(user.status) }}</app-status-badge>
+              </td>
+              <td class="actions">
+                <button type="button" class="link" [attr.aria-label]="'Editar a ' + user.fullName" (click)="openEdit(user)">Editar</button>
+                <button type="button" class="link link--danger" [attr.aria-label]="'Eliminar a ' + user.fullName" (click)="askDelete(user)">Eliminar</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (data(); as page) {
+      @if (page.totalPages > 1) {
+        <app-pagination
+          [page]="page.page"
+          [size]="page.size"
+          [totalElements]="page.totalElements"
+          [totalPages]="page.totalPages"
+          (pageChange)="goToPage($event)"
+        />
+      }
+    }
+  </app-async-state>
+</section>
+
+<app-user-form-modal
+  [open]="formOpen()"
+  [user]="editing()"
+  [saving]="saving()"
+  [error]="formError()"
+  (saved)="save($event)"
+  (closed)="closeForm()"
+/>
+
+<app-confirm-dialog
+  [open]="deleting() !== null"
+  title="Confirmar eliminación"
+  [message]="deleteMessage()"
+  confirmLabel="Eliminar"
+  [danger]="true"
+  (confirmed)="confirmDelete()"
+  (cancelled)="cancelDelete()"
+/>

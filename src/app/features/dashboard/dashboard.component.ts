@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Observable, Subject, catchError, forkJoin, map, merge, of, switchMap, tap, timer } from 'rxjs';
 import { toErrorMessage } from '../../core/http/error-message';
+import { SortState } from '../../core/models/sort.model';
 import { AccessMovement, AccessUserType, RecentAccess } from '../../core/models/dashboard.model';
 import { DashboardSummary } from '../../core/models/dashboard.model';
 import { NavBadgesService } from '../../layout/nav-badges.service';
@@ -12,6 +13,8 @@ import { IconComponent } from '../../shared/components/icon/icon.component';
 import { KpiCardComponent } from '../../shared/components/kpi-card/kpi-card.component';
 import { ChartPoint, LineChartComponent } from '../../shared/components/line-chart/line-chart.component';
 import { BadgeVariant, StatusBadgeComponent } from '../../shared/components/status-badge/status-badge.component';
+import { SortHeaderComponent } from '../../shared/components/sort-header/sort-header.component';
+import { sortRows } from '../../shared/utils/sort';
 import { CurrencyArPipe } from '../../shared/pipes/currency-ar.pipe';
 import { DateTimeArPipe } from '../../shared/pipes/date-time-ar.pipe';
 import { AsyncStatus } from '../../shared/utils/async-state';
@@ -33,6 +36,15 @@ const MOVEMENTS: Record<AccessMovement, { label: string; arrow: string; css: str
   EXIT: { label: 'Egreso', arrow: '↑', css: 'movement--exit' },
 };
 
+const ACCESS_SORT: Record<string, (row: RecentAccess) => unknown> = {
+  id: (row) => row.id,
+  plate: (row) => row.plate,
+  userName: (row) => row.userName,
+  userType: (row) => USER_TYPES[row.userType].label,
+  timestamp: (row) => Date.parse(row.timestamp),
+  movement: (row) => MOVEMENTS[row.movement].label,
+};
+
 @Component({
   selector: 'app-dashboard',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -43,6 +55,7 @@ const MOVEMENTS: Record<AccessMovement, { label: string; arrow: string; css: str
     IconComponent,
     KpiCardComponent,
     LineChartComponent,
+    SortHeaderComponent,
     StatusBadgeComponent,
     CurrencyArPipe,
     DateTimeArPipe,
@@ -59,6 +72,9 @@ export class DashboardComponent {
   protected readonly error = signal<string | null>(null);
   protected readonly summary = signal<DashboardSummary | null>(null);
   protected readonly recent = signal<RecentAccess[]>([]);
+  protected readonly sort = signal<SortState | null>(null);
+  /** Son pocos registros y sin paginación: se ordenan en el navegador. */
+  protected readonly sortedRecent = computed(() => sortRows(this.recent(), this.sort(), ACCESS_SORT));
   /** La actualización automática falló pero se siguen mostrando los últimos datos. */
   protected readonly refreshFailed = signal(false);
 
