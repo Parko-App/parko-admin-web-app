@@ -1,13 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { Subject, catchError, debounceTime, distinctUntilChanged, firstValueFrom, merge, of, switchMap, tap } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { toErrorMessage } from '../../core/http/error-message';
 import { ToastService } from '../../core/notifications/toast.service';
-import { SortState } from '../../core/models/sort.model';
-import { PageResponse } from '../../core/models/page-response.model';
 import {
   AdminUser,
   USER_STATUS_LABELS,
@@ -22,7 +19,7 @@ import { SortHeaderComponent } from '../../shared/components/sort-header/sort-he
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 import { BadgeVariant, StatusBadgeComponent } from '../../shared/components/status-badge/status-badge.component';
 import { CurrencyArPipe } from '../../shared/pipes/currency-ar.pipe';
-import { AsyncStatus } from '../../shared/utils/async-state';
+import { PagedList } from '../../shared/utils/paged-list';
 import { UserFormModalComponent } from './user-form-modal/user-form-modal.component';
 import { UsersService } from './users.service';
 
@@ -57,18 +54,9 @@ const STATUS_VARIANTS: Record<UserStatus, BadgeVariant> = { ACTIVE: 'success', S
 export class UsersComponent {
   private readonly service = inject(UsersService);
   private readonly toast = inject(ToastService);
-  private readonly query$ = new Subject<void>();
 
   protected readonly searchControl = new FormControl('', { nonNullable: true });
-  protected readonly status = signal<AsyncStatus>('loading');
-  protected readonly error = signal<string | null>(null);
-  protected readonly data = signal<PageResponse<AdminUser> | null>(null);
-  protected readonly page = signal(0);
-  protected readonly sort = signal<SortState | null>(null);
-  private readonly search = signal('');
-
-  protected readonly users = computed(() => this.data()?.content ?? []);
-  protected readonly total = computed(() => this.data()?.totalElements ?? 0);
+  protected readonly list = new PagedList<AdminUser>((query) => this.service.list(query), PAGE_SIZE);
 
   // Diálogos
   protected readonly formOpen = signal(false);
@@ -82,50 +70,7 @@ export class UsersComponent {
   });
 
   constructor() {
-    // Búsqueda: espera 300 ms sin tipear, vuelve a la página 1 y recarga.
-    this.searchControl.valueChanges
-      .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
-      .subscribe((term) => {
-        this.search.set(term);
-        this.page.set(0);
-        this.query$.next();
-      });
-
-    merge(of(undefined), this.query$)
-      .pipe(
-        tap(() => this.status.set('loading')),
-        switchMap(() =>
-          this.service.list({ search: this.search(), page: this.page(), size: PAGE_SIZE, sort: this.sort() }).pipe(
-            tap((page) => {
-              this.data.set(page);
-              this.error.set(null);
-              this.status.set(page.content.length === 0 ? 'empty' : 'success');
-            }),
-            catchError((error: unknown) => {
-              this.error.set(toErrorMessage(error));
-              this.status.set('error');
-              return of(null);
-            }),
-          ),
-        ),
-        takeUntilDestroyed(),
-      )
-      .subscribe();
-  }
-
-  protected reload(): void {
-    this.query$.next();
-  }
-
-  protected changeSort(sort: SortState): void {
-    this.sort.set(sort);
-    this.page.set(0);
-    this.reload();
-  }
-
-  protected goToPage(page: number): void {
-    this.page.set(page);
-    this.reload();
+    this.list.bindSearch(this.searchControl);
   }
 
   protected typeLabel(type: UserType): string { return USER_TYPE_LABELS[type]; }
@@ -161,7 +106,7 @@ export class UsersComponent {
       await firstValueFrom(editing ? this.service.update(editing.id, request) : this.service.create(request));
       this.formOpen.set(false);
       this.toast.success(editing ? 'Usuario actualizado correctamente.' : 'Usuario creado correctamente.');
-      this.reload();
+      this.list.reload();
     } catch (error) {
       this.formError.set(this.saveErrorMessage(error));
     } finally {
@@ -187,11 +132,7 @@ export class UsersComponent {
       await firstValueFrom(this.service.delete(user.id));
       this.deleting.set(null);
       this.toast.success(`Se eliminó a ${user.fullName}.`);
-      // Si era el único de la última página, volvemos a la anterior.
-      if (this.users().length === 1 && this.page() > 0) {
-        this.page.update((page) => page - 1);
-      }
-      this.reload();
+      this.list.reloadAfterRemoval();
     } catch (error) {
       this.deleting.set(null);
       this.toast.error(toErrorMessage(error));
@@ -200,7 +141,8 @@ export class UsersComponent {
 
   private saveErrorMessage(error: unknown): string {
     if (error instanceof HttpErrorResponse && error.status === 409) {
-      return 'Ya existe un usuario con ese correo.';
+      const body = error.error as { message?: unknown } | null;
+      return typeof body?.message === 'string' ? body.message : 'Ya existe un usuario con ese correo.';
     }
     return toErrorMessage(error);
   }

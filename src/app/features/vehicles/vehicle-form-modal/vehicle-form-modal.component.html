@@ -1,0 +1,62 @@
+<app-modal [open]="open()" [title]="isEdit ? 'Editar patente' : 'Registrar patente'" (closed)="closed.emit()">
+  <form id="vehicle-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    @if (error(); as message) {
+      <div class="form-error" role="alert">{{ message }}</div>
+    }
+
+    <div class="field">
+      <label for="plate">Patente</label>
+      <input id="plate" formControlName="plate" placeholder="AB 123 CD" autocomplete="off" class="plate-input"
+             [attr.aria-invalid]="submitted() && form.controls.plate.invalid"
+             [attr.aria-describedby]="submitted() && form.controls.plate.invalid ? 'plate-error' : null" />
+      @if (submitted() && form.controls.plate.invalid) {
+        <p class="field__error" id="plate-error">
+          @if (form.controls.plate.hasError('required')) {
+            Ingresá la patente.
+          } @else {
+            Formato inválido. Usá ABC 123 (anterior) o AB 123 CD (Mercosur).
+          }
+        </p>
+      }
+    </div>
+
+    <div class="field">
+      <label for="ownerEmail">Usuario (email)</label>
+      <input id="ownerEmail" type="email" formControlName="ownerEmail" placeholder="usuario@utn.edu.ar" autocomplete="off"
+             [attr.aria-invalid]="submitted() && form.controls.ownerEmail.invalid" />
+      @if (submitted() && form.controls.ownerEmail.invalid) {
+        <p class="field__error">
+          @if (form.controls.ownerEmail.hasError('required')) { Ingresá el correo del usuario. } @else { Ingresá un correo válido. }
+        </p>
+      }
+    </div>
+
+    <div class="row" [class.row--single]="!isEdit">
+      <div class="field">
+        <label for="type">Tipo de vehículo</label>
+        <select id="type" formControlName="type">
+          @for (item of types; track item[0]) {
+            <option [value]="item[0]">{{ item[1] }}</option>
+          }
+        </select>
+      </div>
+      @if (isEdit) {
+        <div class="field">
+          <label for="status">Estado</label>
+          <select id="status" formControlName="status">
+            @for (item of statuses; track item[0]) {
+              <option [value]="item[0]">{{ item[1] }}</option>
+            }
+          </select>
+        </div>
+      }
+    </div>
+  </form>
+
+  <ng-container modalFooter>
+    <button type="button" class="btn" (click)="closed.emit()">Cancelar</button>
+    <button type="submit" form="vehicle-form" class="btn btn--primary" [disabled]="saving()">
+      {{ saving() ? 'Guardando…' : isEdit ? 'Guardar cambios' : 'Registrar' }}
+    </button>
+  </ng-container>
+</app-modal>

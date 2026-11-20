@@ -1,0 +1,87 @@
+<div class="toolbar">
+  <div class="search">
+    <label for="search" class="sr-only">Buscar patentes</label>
+    <input
+      id="search"
+      type="search"
+      [formControl]="searchControl"
+      placeholder="Buscar por patente o usuario…"
+      autocomplete="off"
+    />
+  </div>
+  <button type="button" class="btn btn--primary" (click)="openCreate()">+ Registrar patente</button>
+</div>
+
+<section class="card list" aria-label="Listado de vehículos">
+  <app-async-state
+    [status]="list.status()"
+    [error]="list.error()"
+    loadingMessage="Cargando vehículos…"
+    [emptyTitle]="searchControl.value ? 'No se encontraron patentes' : 'Todavía no hay patentes registradas'"
+    [emptyDescription]="searchControl.value ? 'Probá con otra patente o usuario.' : ''"
+    (retry)="list.reload()"
+  >
+    <div class="table-scroll">
+      <table class="vehicles">
+        <caption class="sr-only">Patentes registradas</caption>
+        <thead>
+          <tr>
+            <th scope="col" appSortHeader="plate" [sort]="list.sort()" (sortChange)="list.changeSort($event)">Patente</th>
+            <th scope="col" appSortHeader="ownerName" [sort]="list.sort()" (sortChange)="list.changeSort($event)">Usuario</th>
+            <th scope="col" appSortHeader="type" [sort]="list.sort()" (sortChange)="list.changeSort($event)">Tipo</th>
+            <th scope="col" appSortHeader="status" [sort]="list.sort()" (sortChange)="list.changeSort($event)">Estado</th>
+            <th scope="col" appSortHeader="registeredAt" [sort]="list.sort()" (sortChange)="list.changeSort($event)">Registrada desde</th>
+            <th scope="col">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (vehicle of list.items(); track vehicle.id) {
+            <tr>
+              <td class="plate">{{ vehicle.plate | plate }}</td>
+              <td class="owner">{{ vehicle.ownerName }}</td>
+              <td class="muted">{{ typeLabel(vehicle.type) }}</td>
+              <td>
+                <app-status-badge [variant]="statusVariant(vehicle.status)">{{ statusLabel(vehicle.status) }}</app-status-badge>
+              </td>
+              <td class="muted">{{ vehicle.registeredAt | dateTimeAr: 'date' }}</td>
+              <td class="actions">
+                <button type="button" class="link" [attr.aria-label]="'Editar la patente ' + (vehicle.plate | plate)" (click)="openEdit(vehicle)">Editar</button>
+                <button type="button" class="link link--danger" [attr.aria-label]="'Eliminar la patente ' + (vehicle.plate | plate)" (click)="askDelete(vehicle)">Eliminar</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (list.data(); as page) {
+      @if (page.totalPages > 1) {
+        <app-pagination
+          [page]="page.page"
+          [size]="page.size"
+          [totalElements]="page.totalElements"
+          [totalPages]="page.totalPages"
+          (pageChange)="list.goToPage($event)"
+        />
+      }
+    }
+  </app-async-state>
+</section>
+
+<app-vehicle-form-modal
+  [open]="formOpen()"
+  [vehicle]="editing()"
+  [saving]="saving()"
+  [error]="formError()"
+  (saved)="save($event)"
+  (closed)="closeForm()"
+/>
+
+<app-confirm-dialog
+  [open]="deleting() !== null"
+  title="Confirmar eliminación"
+  [message]="deleteMessage()"
+  confirmLabel="Eliminar"
+  [danger]="true"
+  (confirmed)="confirmDelete()"
+  (cancelled)="cancelDelete()"
+/>
