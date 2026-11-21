@@ -49,6 +49,14 @@ export interface PaymentRecord {
   cashierName: string | null;
 }
 
+/** Datos que solo trae el detalle de un ticket y que necesita el comprobante. */
+export interface TicketExtras {
+  /** Contenido del QR del ticket (columna qr_data). */
+  qrData: string | null;
+  /** Saldo actual del usuario dueño del vehículo. null para visitantes (no tienen cuenta). */
+  balance: number | null;
+}
+
 /** Fila del listado de tickets de la pantalla Pagos. */
 export interface TicketRow {
   id: string;

@@ -179,6 +179,23 @@ describe('integración: pagos', () => {
     http.expectNone(`${API}/admin/tickets/t1/pay`);
   });
 
+  it('trae el QR y el saldo actual del usuario desde el detalle del ticket', async () => {
+    const http = setup();
+    const service = TestBed.runInInjectionContext(() => new HttpPaymentsService());
+
+    const registered = firstValueFrom(service.ticketExtras('t1'));
+    http.expectOne(`${API}/admin/tickets/t1`).flush({
+      ...detail('PENDING_PAYMENT'),
+      qrData: 'http://localhost:8081/api/v1/access/sessions/abc',
+      owner: { id: 'u1', studentId: '81658', fullName: 'Ana Pérez', email: 'ana@frc.utn.edu.ar', balance: 12500.5 },
+    });
+    expect(await registered).toEqual({ qrData: 'http://localhost:8081/api/v1/access/sessions/abc', balance: 12500.5 });
+
+    const visitor = firstValueFrom(service.ticketExtras('t2'));
+    http.expectOne(`${API}/admin/tickets/t2`).flush({ ...detail('PENDING_PAYMENT'), qrData: 'qr-visitante', owner: null });
+    expect(await visitor).toEqual({ qrData: 'qr-visitante', balance: null });
+  });
+
   it('lista todos los tickets con su estado, método de pago y cajero', async () => {
     const http = setup();
     const result = firstValueFrom(

@@ -9,6 +9,7 @@ import {
   PaymentRecord,
   RegisterPaymentRequest,
   TICKET_STATUS_LABELS,
+  TicketExtras,
   TicketRow,
   TicketSessionType,
   TicketStatus,
@@ -26,6 +27,8 @@ export abstract class PaymentsService {
   abstract registerPayment(request: RegisterPaymentRequest): Observable<PaymentRecord>;
   /** Todos los tickets (más recientes primero), paginados y ordenados por el servidor. */
   abstract listTickets(query: ListQuery): Observable<PageResponse<TicketRow>>;
+  /** Saldo actual del usuario y contenido del QR del ticket; se consultan al abrir el detalle o bajar el PDF. */
+  abstract ticketExtras(ticketId: string): Observable<TicketExtras>;
 }
 
 /** Orden en memoria de la demostración; en la API real lo hace el servidor (ticketNumber, issuedAt, status). */
@@ -74,6 +77,8 @@ interface TicketDetailDto {
     entryAt: string;
   };
   payment: { transactionId: string; paymentProvider: string | null; amount: number; createdAt: string } | null;
+  qrData?: string | null;
+  owner?: { balance: number | null } | null;
 }
 
 const toTicket = (dto: TicketDetailDto): VisitorTicket => ({
@@ -139,6 +144,15 @@ export class HttpPaymentsService extends PaymentsService {
     return this.api
       .get<PageResponse<TicketSummaryDto>>('admin/tickets', { page: query.page, sort: toSortParam(query.sort) })
       .pipe(map((page) => ({ ...page, content: page.content.map(toRow) })));
+  }
+
+  ticketExtras(ticketId: string): Observable<TicketExtras> {
+    return this.api.get<TicketDetailDto>(`admin/tickets/${encodeURIComponent(ticketId)}`).pipe(
+      map((dto) => ({
+        qrData: dto.qrData ?? null,
+        balance: dto.owner?.balance === null || dto.owner?.balance === undefined ? null : Number(dto.owner.balance),
+      })),
+    );
   }
 
   private findDetail(code: string): Observable<TicketDetailDto> {
@@ -233,6 +247,15 @@ export class MockPaymentsService extends PaymentsService {
     };
     this.payments = [record, ...this.payments];
     return of({ ...record });
+  }
+
+  /** Demostración: los usuarios registrados tienen saldo, los visitantes no; el QR es un link de pago de ejemplo. */
+  ticketExtras(ticketId: string): Observable<TicketExtras> {
+    const ticketNumber$ = ticketId.replace(/^row-/, '');
+    return of({
+      qrData: `https://parko.example/pagar/${ticketNumber$}`,
+      balance: ticketNumber$.endsWith('0039') || ticketNumber$.endsWith('0008') ? 12500 : null,
+    });
   }
 
   listTickets(query: ListQuery): Observable<PageResponse<TicketRow>> {

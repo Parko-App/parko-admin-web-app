@@ -22,13 +22,18 @@ export function receiptAmountText(data: Pick<ReceiptData, 'amount' | 'direction'
   return `${SIGNS[data.direction]}${formatPesos(data.amount)}`;
 }
 
+/** Texto que codifica el QR del PDF: el qr_data del ticket si lo hay (ticket a cobrar), o el código del comprobante. */
+export function receiptQrText(data: Pick<ReceiptData, 'code' | 'qrData'>): string {
+  return data.qrData ?? data.code;
+}
+
 export function receiptFileName(data: Pick<ReceiptData, 'code'>): string {
   return `comprobante-${data.code}.pdf`;
 }
 
 /** Arma el comprobante en PDF (A4) con el mismo diseño que el detalle en pantalla. */
 export async function buildReceiptPdf(data: ReceiptData): Promise<Blob> {
-  const [{ jsPDF }, matrix] = await Promise.all([import('jspdf'), qrMatrix(data.code)]);
+  const [{ jsPDF }, matrix] = await Promise.all([import('jspdf'), qrMatrix(receiptQrText(data))]);
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
 
   const left = 45;

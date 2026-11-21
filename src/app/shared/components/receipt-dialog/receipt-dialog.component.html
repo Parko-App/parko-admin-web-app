@@ -21,7 +21,7 @@
         <strong [class]="'receipt__amount receipt__amount--' + receipt.direction">{{ amountText(receipt) }}</strong>
       </div>
 
-      @if (qr(); as code) {
+      @if (showQr() && qr(); as code) {
         <svg class="receipt__qr" [attr.viewBox]="'-2 -2 ' + (code.size + 4) + ' ' + (code.size + 4)" shape-rendering="crispEdges" role="img" aria-label="Código QR del comprobante">
           <path [attr.d]="code.path" fill="#000" />
         </svg>

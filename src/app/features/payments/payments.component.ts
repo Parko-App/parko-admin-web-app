@@ -5,7 +5,6 @@ import { toErrorMessage } from '../../core/http/error-message';
 import {
   PAYMENT_METHOD_LABELS,
   PaymentMethod,
-  PaymentRecord,
   RegisterPaymentRequest,
   TICKET_SESSION_TYPE_LABELS,
   TICKET_STATUS_LABELS,
@@ -25,7 +24,8 @@ import { PlatePipe } from '../../shared/pipes/plate.pipe';
 import { DateTimeArPipe } from '../../shared/pipes/date-time-ar.pipe';
 import { PagedList } from '../../shared/utils/paged-list';
 import { ReceiptDialogComponent } from '../../shared/components/receipt-dialog/receipt-dialog.component';
-import { paymentReceipt } from '../../shared/receipt/receipt-builders';
+import { ticketReceipt } from '../../shared/receipt/receipt-builders';
+import { ReceiptData } from '../../shared/receipt/receipt.model';
 import { ReceiptService } from '../../shared/receipt/receipt.service';
 import { PaymentFormModalComponent } from './payment-form-modal/payment-form-modal.component';
 import { PaymentsService } from './payments.service';
@@ -67,11 +67,10 @@ export class PaymentsComponent {
   protected readonly confirming = signal(false);
   protected readonly charging = signal(false);
 
-  protected readonly detail = signal<TicketRow | null>(null);
-  protected readonly detailReceipt = computed(() => {
-    const row = this.detail();
-    return row ? paymentReceipt(toPaymentRecord(row)) : null;
-  });
+  /** Comprobante abierto en el diálogo de detalle (null = cerrado). */
+  protected readonly detailReceipt = signal<ReceiptData | null>(null);
+  /** Mientras se consultan el saldo y el QR del ticket, los botones de la tabla quedan deshabilitados. */
+  protected readonly loadingReceipt = signal(false);
 
   protected readonly manualOpen = signal(false);
   protected readonly manualSaving = signal(false);
@@ -178,27 +177,37 @@ export class PaymentsComponent {
     }
   }
 
-  protected openDetail(row: TicketRow): void {
-    this.detail.set(row);
+  protected async openDetail(row: TicketRow): Promise<void> {
+    const receipt = await this.loadReceipt(row);
+    if (receipt) {
+      this.detailReceipt.set(receipt);
+    }
   }
 
-  protected downloadPdf(row: TicketRow): void {
-    void this.receipts.download(paymentReceipt(toPaymentRecord(row)));
+  protected async downloadPdf(row: TicketRow): Promise<void> {
+    const receipt = await this.loadReceipt(row);
+    if (receipt) {
+      await this.receipts.download(receipt);
+    }
+  }
+
+  /** Arma el comprobante con el saldo del usuario y el QR del ticket al momento de la consulta. */
+  private async loadReceipt(row: TicketRow): Promise<ReceiptData | null> {
+    if (this.loadingReceipt()) {
+      return null;
+    }
+    this.loadingReceipt.set(true);
+    try {
+      return ticketReceipt(row, await firstValueFrom(this.service.ticketExtras(row.id)));
+    } catch (error) {
+      this.toast.error(toErrorMessage(error));
+      return null;
+    } finally {
+      this.loadingReceipt.set(false);
+    }
   }
 
   protected countLabel(count: number): string {
     return count === 1 ? '1 ticket' : `${count} tickets`;
   }
-}
-
-/** Comprobante de un ticket cobrado. */
-function toPaymentRecord(row: TicketRow): PaymentRecord {
-  return {
-    id: row.id,
-    ticketNumber: row.ticketNumber,
-    paidAt: row.paidAt ?? row.issuedAt,
-    amount: row.amount ?? 0,
-    method: row.method,
-    cashierName: row.cashierName,
-  };
 }

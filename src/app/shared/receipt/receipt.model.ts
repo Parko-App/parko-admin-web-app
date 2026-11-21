@@ -15,4 +15,9 @@ export interface ReceiptData {
   rows: ReceiptRow[];
   amount: number;
   direction: 'credit' | 'debit' | 'neutral';
+  /**
+   * Contenido del QR del PDF. Si no se informa, el QR lleva `code`.
+   * En un ticket pendiente es el `qr_data` del ticket, para poder escanearlo y pagarlo.
+   */
+  qrData?: string;
 }

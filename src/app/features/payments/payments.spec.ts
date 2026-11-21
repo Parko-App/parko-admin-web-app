@@ -2,7 +2,9 @@ import { registerLocaleData } from '@angular/common';
 import localeEsAr from '@angular/common/locales/es-AR';
 import { LOCALE_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
 import { ToastService } from '../../core/notifications/toast.service';
+import { ReceiptService } from '../../shared/receipt/receipt.service';
 import { PaymentsComponent } from './payments.component';
 import { MOCK_SAMPLE_TICKETS, MockPaymentsService, PaymentsService } from './payments.service';
 
@@ -227,18 +229,89 @@ describe('PaymentsComponent', () => {
     });
   });
 
-  it('cada ticket cobrado tiene "Ver detalle" (comprobante en rojo) y "Generar PDF"; los demás no', async () => {
-    const { el, settle } = await setup();
-    const rows = el.querySelectorAll('.payments tbody tr');
+  describe('detalle y PDF de cada ticket', () => {
     const buttons = (row: Element) => Array.from(row.querySelectorAll('button')).map((b) => b.textContent?.trim());
-    expect(buttons(rows[0])).toEqual(['Ver detalle', 'Generar PDF']);
-    expect(buttons(rows[5])).toEqual([]); // pendiente
-    expect(buttons(rows[8])).toEqual([]); // cancelado
+    const rowOf = (el: HTMLElement, ticket: string) =>
+      Array.from(el.querySelectorAll('.payments tbody tr')).find((r) => r.textContent?.includes(`-${ticket}`))!;
+    const dialog = (el: HTMLElement) => el.querySelector('[role=dialog]')!;
 
-    (rows[0].querySelector('button') as HTMLButtonElement).click();
-    await settle();
-    expect(el.querySelector('.receipt__title')?.textContent).toContain('Pago realizado');
-    expect(el.querySelector('.receipt__amount--debit')?.textContent?.trim()).toBe('- $980');
-    expect(el.querySelector('[role=dialog]')?.textContent).toContain('Mercado Pago');
+    it('todos tienen "Ver detalle" y "Generar PDF", menos los cancelados', async () => {
+      const { el } = await setup();
+      const rows = el.querySelectorAll('.payments tbody tr');
+      expect(buttons(rows[0])).toEqual(['Ver detalle', 'Generar PDF']); // cobrado
+      expect(buttons(rows[5])).toEqual(['Ver detalle', 'Generar PDF']); // pendiente
+      expect(buttons(rows[7])).toEqual(['Ver detalle', 'Generar PDF']); // utilizado
+      expect(buttons(rows[8])).toEqual([]); // cancelado
+    });
+
+    it('el detalle de un cobrado muestra el pago (rojo) y no muestra el QR', async () => {
+      const { el, click, settle } = await setup();
+      (rowOf(el, '0028').querySelector('button') as HTMLButtonElement).click();
+      await settle();
+      expect(el.querySelector('.receipt__title')?.textContent).toContain('Pago realizado');
+      expect(el.querySelector('.receipt__amount--debit')?.textContent?.trim()).toBe('- $980');
+      expect(dialog(el).textContent).toContain('Mercado Pago');
+      expect(el.querySelector('svg.receipt__qr')).toBeNull();
+      expect(click).toBeDefined();
+    });
+
+    it('el detalle de un pendiente muestra el ticket a cobrar, sin QR en pantalla', async () => {
+      const { el, settle } = await setup();
+      (rowOf(el, '0042').querySelector('button') as HTMLButtonElement).click();
+      await settle();
+      expect(el.querySelector('.receipt__title')?.textContent).toContain('Ticket pendiente de pago');
+      expect(dialog(el).textContent).toContain('Pendiente de cobro');
+      expect(dialog(el).textContent).toContain('XY 987 ZW');
+      expect(el.querySelector('.receipt__amount--debit')).toBeNull();
+      expect(el.querySelector('svg.receipt__qr')).toBeNull();
+    });
+
+    it('suma el saldo actual del usuario en los detalles, y no en los de un visitante', async () => {
+      const { el, settle } = await setup();
+      // 0039: pendiente de un usuario registrado
+      (rowOf(el, '0039').querySelector('button') as HTMLButtonElement).click();
+      await settle();
+      expect(dialog(el).textContent).toContain('Saldo del usuario');
+      expect(dialog(el).textContent).toContain('$12.500');
+      (dialog(el).querySelector('.btn:not(.btn--primary)') as HTMLButtonElement).click();
+      await settle();
+
+      // 0008: utilizado, también de un usuario registrado
+      (rowOf(el, '0008').querySelector('button') as HTMLButtonElement).click();
+      await settle();
+      expect(dialog(el).textContent).toContain('$12.500');
+      (dialog(el).querySelector('.btn:not(.btn--primary)') as HTMLButtonElement).click();
+      await settle();
+
+      // 0042: visitante, no tiene cuenta de saldo
+      (rowOf(el, '0042').querySelector('button') as HTMLButtonElement).click();
+      await settle();
+      expect(dialog(el).textContent).not.toContain('Saldo del usuario');
+    });
+
+    it('el PDF de un pendiente lleva el qr_data del ticket para escanearlo y pagarlo', async () => {
+      const { el, settle } = await setup();
+      const download = vi.spyOn(TestBed.inject(ReceiptService), 'download').mockResolvedValue(true);
+
+      (rowOf(el, '0042').querySelectorAll('button')[1] as HTMLButtonElement).click();
+      await settle();
+
+      expect(download).toHaveBeenCalledTimes(1);
+      const receipt = download.mock.calls[0][0];
+      expect(receipt.title).toBe('Ticket pendiente de pago');
+      expect(receipt.qrData).toBe(`https://parko.example/pagar/${MOCK_SAMPLE_TICKETS[0]}`);
+    });
+
+    it('el PDF de un cobrado no lleva QR de pago, pero suma el saldo del usuario', async () => {
+      const { el, settle } = await setup();
+      const download = vi.spyOn(TestBed.inject(ReceiptService), 'download').mockResolvedValue(true);
+
+      (rowOf(el, '0008').querySelectorAll('button')[1] as HTMLButtonElement).click();
+      await settle();
+
+      const receipt = download.mock.calls[0][0];
+      expect(receipt.qrData).toBeUndefined();
+      expect(receipt.rows.find((r) => r.label === 'Saldo del usuario')?.value).toBe('$12.500');
+    });
   });
 });

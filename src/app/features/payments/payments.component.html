@@ -75,9 +75,9 @@
               <td class="muted">{{ row.method ? methodLabel(row.method) : '—' }}</td>
               <td class="muted">{{ row.cashierName ?? '—' }}</td>
               <td><div class="actions">
-                @if (row.status === 'PAID' || row.status === 'USED') {
-                  <button type="button" class="link" [attr.aria-label]="'Ver detalle del ticket ' + row.ticketNumber" (click)="openDetail(row)">Ver detalle</button>
-                  <button type="button" class="link" [attr.aria-label]="'Generar PDF del ticket ' + row.ticketNumber" (click)="downloadPdf(row)">Generar PDF</button>
+                @if (row.status !== 'CANCELLED') {
+                  <button type="button" class="link" [disabled]="loadingReceipt()" [attr.aria-label]="'Ver detalle del ticket ' + row.ticketNumber" (click)="openDetail(row)">Ver detalle</button>
+                  <button type="button" class="link" [disabled]="loadingReceipt()" [attr.aria-label]="'Generar PDF del ticket ' + row.ticketNumber" (click)="downloadPdf(row)">Generar PDF</button>
                 } @else {
                   <span class="muted">—</span>
                 }
@@ -121,4 +121,4 @@
   (cancelled)="cancelCharge()"
 />
 
-<app-receipt-dialog [open]="detail() !== null" [data]="detailReceipt()" (closed)="detail.set(null)" />
+<app-receipt-dialog [open]="detailReceipt() !== null" [data]="detailReceipt()" [showQr]="false" (closed)="detailReceipt.set(null)" />
