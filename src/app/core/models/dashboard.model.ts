@@ -15,14 +15,8 @@ export interface DashboardSummary {
     paymentsPending: number;
     openIncidents: number;
   };
-  alerts: DashboardAlert[];
   /** Vehículos estacionados al cierre de cada hora (0 a 23) del día de hoy. */
   occupancyByHour: { hour: number; vehicles: number }[];
-}
-
-export interface DashboardAlert {
-  level: 'info' | 'warning' | 'danger';
-  message: string;
 }
 
 export type AccessUserType = 'REGISTERED' | 'VISITOR' | 'TEACHER' | 'STAFF';

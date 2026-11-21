@@ -36,6 +36,16 @@
               "@fontsource/inter/600.css",
               "@fontsource/inter/700.css",
               "src/styles.scss"
+            ],
+            "allowedCommonJsDependencies": [
+              "html2canvas",
+              "canvg",
+              "core-js",
+              "raf",
+              "rgbcolor",
+              "svg-pathdata",
+              "dompurify",
+              "fflate"
             ]
           },
           "configurations": {

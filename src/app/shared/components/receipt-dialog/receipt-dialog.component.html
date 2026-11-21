@@ -1,0 +1,45 @@
+<app-modal [open]="open()" title="Detalle del comprobante" size="sm" (closed)="closed.emit()">
+  @if (data(); as receipt) {
+    <article class="receipt">
+      <header class="receipt__head">
+        <span class="receipt__brand">PARKO</span>
+        <span class="receipt__badge">COMPROBANTE</span>
+      </header>
+
+      <div class="receipt__section">
+        <h3 class="receipt__title">{{ receipt.title }}</h3>
+        <p class="receipt__subtitle">{{ receipt.subtitle }}</p>
+        <dl class="receipt__rows">
+          @for (row of receipt.rows; track row.label) {
+            <div><dt>{{ row.label }}</dt><dd>{{ row.value }}</dd></div>
+          }
+        </dl>
+      </div>
+
+      <div class="receipt__total">
+        <span>Monto Total</span>
+        <strong [class]="'receipt__amount receipt__amount--' + receipt.direction">{{ amountText(receipt) }}</strong>
+      </div>
+
+      @if (qr(); as code) {
+        <svg class="receipt__qr" [attr.viewBox]="'-2 -2 ' + (code.size + 4) + ' ' + (code.size + 4)" shape-rendering="crispEdges" role="img" aria-label="Código QR del comprobante">
+          <path [attr.d]="code.path" fill="#000" />
+        </svg>
+      }
+      <p class="receipt__foot">Comprobante oficial emitido por Parko</p>
+    </article>
+  }
+
+  <ng-container modalFooter>
+    <button type="button" class="btn" (click)="closed.emit()">Cerrar</button>
+    <button
+      type="button"
+      class="btn btn--primary"
+      [disabled]="!pdfEnabled() || generating()"
+      [attr.title]="pdfEnabled() ? null : 'El PDF solo está disponible para cargas acreditadas'"
+      (click)="downloadPdf()"
+    >
+      {{ generating() ? 'Generando…' : 'Generar PDF' }}
+    </button>
+  </ng-container>
+</app-modal>

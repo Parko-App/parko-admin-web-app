@@ -51,7 +51,7 @@ describe('DashboardComponent', () => {
     expect(text).toContain('8 visitantes · 213 registrados');
     expect(text).toContain('$9.120 recaudado');
     expect(text).toContain('12 pendientes');
-    expect(text).toContain('Sector B casi lleno (94%)');
+    expect(text).not.toContain('Sector');
     expect(el.querySelectorAll('.access tbody tr').length).toBe(8);
     expect(text).toContain('AB 123 CD');
     expect(text).toContain('10:47');

@@ -8,7 +8,6 @@ import { AccessMovement, AccessUserType, RecentAccess } from '../../core/models/
 import { DashboardSummary } from '../../core/models/dashboard.model';
 import { AsyncStateComponent } from '../../shared/components/async-state/async-state.component';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
-import { IconComponent } from '../../shared/components/icon/icon.component';
 import { KpiCardComponent } from '../../shared/components/kpi-card/kpi-card.component';
 import { ChartPoint, LineChartComponent } from '../../shared/components/line-chart/line-chart.component';
 import { BadgeVariant, StatusBadgeComponent } from '../../shared/components/status-badge/status-badge.component';
@@ -51,7 +50,6 @@ const ACCESS_SORT: Record<string, (row: RecentAccess) => unknown> = {
     DecimalPipe,
     AsyncStateComponent,
     EmptyStateComponent,
-    IconComponent,
     KpiCardComponent,
     LineChartComponent,
     SortHeaderComponent,

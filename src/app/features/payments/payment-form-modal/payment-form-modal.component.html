@@ -16,31 +16,15 @@
       }
     </div>
 
-    <div class="row">
-      <div class="field">
-        <label for="pay-amount">Monto a pagar ($)</label>
-        <input id="pay-amount" type="number" inputmode="decimal" min="0" step="0.01" formControlName="amount"
-               placeholder="0" [attr.aria-invalid]="showError('amount')"
-               [attr.aria-describedby]="showError('amount') ? 'pay-amount-error' : null" />
-        @if (showError('amount')) {
-          <p class="field__error" id="pay-amount-error">Ingresá un monto mayor a cero.</p>
-        }
-      </div>
-
-      <div class="field">
-        <label for="pay-received">Efectivo recibido ($) <span class="optional">(opcional)</span></label>
-        <input id="pay-received" type="number" inputmode="decimal" min="0" step="0.01" formControlName="receivedAmount"
-               placeholder="0" [attr.aria-invalid]="showError('receivedAmount') || (attempted() && form.hasError('receivedTooLow'))"
-               [attr.aria-describedby]="attempted() && form.hasError('receivedTooLow') ? 'pay-received-error' : null" />
-        @if (attempted() && form.hasError('receivedTooLow')) {
-          <p class="field__error" id="pay-received-error">El efectivo recibido no alcanza para cubrir el monto.</p>
-        }
-      </div>
+    <div class="field">
+      <label for="pay-amount">Monto a pagar ($)</label>
+      <input id="pay-amount" type="number" inputmode="decimal" min="0" step="0.01" formControlName="amount"
+             placeholder="0" [attr.aria-invalid]="showError('amount')"
+             [attr.aria-describedby]="showError('amount') ? 'pay-amount-error' : null" />
+      @if (showError('amount')) {
+        <p class="field__error" id="pay-amount-error">Ingresá un monto mayor a cero.</p>
+      }
     </div>
-
-    @if (change(); as value) {
-      <p class="change" aria-live="polite">Vuelto a entregar: <strong>{{ value | currencyAr }}</strong></p>
-    }
 
     <div class="field">
       <label for="pay-notes">Observaciones <span class="optional">(opcional)</span></label>

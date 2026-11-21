@@ -3,6 +3,7 @@ import { authGuard, guestGuard } from './core/auth/auth.guard';
 import { DASHBOARD_SERVICE_PROVIDER } from './features/dashboard/dashboard.service';
 import { USERS_SERVICE_PROVIDER } from './features/users/users.service';
 import { VEHICLES_SERVICE_PROVIDER } from './features/vehicles/vehicles.service';
+import { TOP_UPS_SERVICE_PROVIDER } from './features/top-ups/top-ups.service';
 import { ACCESS_SERVICE_PROVIDER } from './features/access/access.service';
 import { SETTINGS_SERVICE_PROVIDER } from './features/settings/settings.service';
 import { REPORTS_SERVICE_PROVIDER } from './features/reports/reports.service';
@@ -52,6 +53,12 @@ export const routes: Routes = [
         title: 'Procesamiento de Pagos',
         providers: [PAYMENTS_SERVICE_PROVIDER],
         loadComponent: () => import('./features/payments/payments.component').then((m) => m.PaymentsComponent),
+      },
+      {
+        path: 'saldos',
+        title: 'Carga de Saldos',
+        providers: [TOP_UPS_SERVICE_PROVIDER],
+        loadComponent: () => import('./features/top-ups/top-ups.component').then((m) => m.TopUpsComponent),
       },
       {
         path: 'reportes',

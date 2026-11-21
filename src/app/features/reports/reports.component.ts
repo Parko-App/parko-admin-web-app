@@ -5,14 +5,14 @@ import { toErrorMessage } from '../../core/http/error-message';
 import { DateRange, REPORT_TYPE_LABELS, ReportType } from '../../core/models/report.model';
 import { ToastService } from '../../core/notifications/toast.service';
 import { AsyncStateComponent } from '../../shared/components/async-state/async-state.component';
-import { downloadTextFile } from '../../shared/utils/csv';
+import { downloadBlob, downloadTextFile } from '../../shared/utils/csv';
 import { addDays, daysBetween, todayInArgentina } from '../../shared/utils/dates';
 import { AsyncStatus } from '../../shared/utils/async-state';
 import { AccessViewComponent } from './views/access-view.component';
 import { OccupancyViewComponent } from './views/occupancy-view.component';
 import { RevenueViewComponent } from './views/revenue-view.component';
 import { ReportsService } from './reports.service';
-import { ReportResult, buildReportCsv, hasData, reportFileName, reportTitle } from './report-export';
+import { ReportResult, buildReportCsv, hasData, reportFileName } from './report-export';
 
 /** Rango máximo por consulta; evita pedidos enormes (el límite real lo definirá el backend). */
 export const MAX_RANGE_DAYS = 366;
@@ -67,6 +67,7 @@ export class ReportsComponent {
   protected readonly status = signal<AsyncStatus>('loading');
   protected readonly error = signal<string | null>(null);
   protected readonly result = signal<ReportResult | null>(null);
+  protected readonly exportingPdf = signal(false);
   private sequence = 0;
 
   protected readonly canExport = computed(() => {
@@ -127,18 +128,21 @@ export class ReportsComponent {
     this.toast.success('Se descargó el reporte en CSV.');
   }
 
-  /** PDF a través del diálogo de impresión del navegador ("Guardar como PDF"). */
-  protected exportPdf(): void {
+  /** Genera el PDF en el navegador y lo descarga directamente (sin pasar por el diálogo de impresión). */
+  protected async exportPdf(): Promise<void> {
     const result = this.result();
-    if (!result || !this.canExport()) {
+    if (!result || !this.canExport() || this.exportingPdf()) {
       return;
     }
-    const previousTitle = document.title;
-    document.title = `Parko - ${reportTitle(result)}`; // sugiere el nombre del archivo
+    this.exportingPdf.set(true);
     try {
-      window.print();
+      const { buildReportPdf } = await import('./report-pdf');
+      downloadBlob(reportFileName(result, 'pdf'), await buildReportPdf(result));
+      this.toast.success('Se descargó el reporte en PDF.');
+    } catch {
+      this.toast.error('No se pudo generar el PDF. Intentá de nuevo.');
     } finally {
-      document.title = previousTitle;
+      this.exportingPdf.set(false);
     }
   }
 

@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
-import { USE_MOCKS } from '../../core/config/tokens';
 import { toErrorMessage } from '../../core/http/error-message';
 import {
   PAYMENT_METHOD_LABELS,
   PaymentMethod,
+  PaymentRecord,
   RegisterPaymentRequest,
   TICKET_STATUS_LABELS,
   TicketStatus,
@@ -21,8 +21,11 @@ import { BadgeVariant, StatusBadgeComponent } from '../../shared/components/stat
 import { CurrencyArPipe } from '../../shared/pipes/currency-ar.pipe';
 import { DateTimeArPipe } from '../../shared/pipes/date-time-ar.pipe';
 import { AsyncStatus } from '../../shared/utils/async-state';
+import { ReceiptDialogComponent } from '../../shared/components/receipt-dialog/receipt-dialog.component';
+import { paymentReceipt } from '../../shared/receipt/receipt-builders';
+import { ReceiptService } from '../../shared/receipt/receipt.service';
 import { PaymentFormModalComponent } from './payment-form-modal/payment-form-modal.component';
-import { MOCK_SAMPLE_TICKETS, PaymentsService } from './payments.service';
+import { PaymentsService } from './payments.service';
 
 const TICKET_VARIANTS: Record<TicketStatus, BadgeVariant> = { PENDING: 'warning', PAID: 'success' };
 
@@ -38,6 +41,7 @@ const TICKET_VARIANTS: Record<TicketStatus, BadgeVariant> = { PENDING: 'warning'
     CurrencyArPipe,
     DateTimeArPipe,
     PaymentFormModalComponent,
+    ReceiptDialogComponent,
   ],
   templateUrl: './payments.component.html',
   styleUrl: './payments.component.scss',
@@ -45,10 +49,8 @@ const TICKET_VARIANTS: Record<TicketStatus, BadgeVariant> = { PENDING: 'warning'
 export class PaymentsComponent {
   private readonly service = inject(PaymentsService);
   private readonly toast = inject(ToastService);
+  private readonly receipts = inject(ReceiptService);
   private readonly currency = new CurrencyArPipe();
-
-  /** La pista con tickets de ejemplo solo tiene sentido con datos de demostración. */
-  protected readonly sampleTickets = inject(USE_MOCKS) ? MOCK_SAMPLE_TICKETS : [];
 
   protected readonly codeControl = new FormControl('', { nonNullable: true });
   protected readonly searching = signal(false);
@@ -56,6 +58,12 @@ export class PaymentsComponent {
   protected readonly ticket = signal<VisitorTicket | null>(null);
   protected readonly confirming = signal(false);
   protected readonly charging = signal(false);
+
+  protected readonly detail = signal<PaymentRecord | null>(null);
+  protected readonly detailReceipt = computed(() => {
+    const payment = this.detail();
+    return payment ? paymentReceipt(payment) : null;
+  });
 
   protected readonly manualOpen = signal(false);
   protected readonly manualSaving = signal(false);
@@ -151,9 +159,7 @@ export class PaymentsComponent {
     try {
       const record = await firstValueFrom(this.service.registerPayment(request));
       this.manualOpen.set(false);
-      const change = request.receivedAmount !== undefined ? request.receivedAmount - request.amount : 0;
-      const changeText = change > 0 ? ` Vuelto: ${this.currency.transform(change)}.` : '';
-      this.toast.success(`Pago registrado: ${this.currency.transform(record.amount)} (${record.ticketNumber}).${changeText}`);
+      this.toast.success(`Pago registrado: ${this.currency.transform(record.amount)} (${record.ticketNumber}).`);
       // Si ese ticket está abierto en la búsqueda, refleja el nuevo estado.
       const open = this.ticket();
       if (open?.ticketNumber === record.ticketNumber) {
@@ -165,6 +171,14 @@ export class PaymentsComponent {
     } finally {
       this.manualSaving.set(false);
     }
+  }
+
+  protected openDetail(payment: PaymentRecord): void {
+    this.detail.set(payment);
+  }
+
+  protected downloadPdf(payment: PaymentRecord): void {
+    void this.receipts.download(paymentReceipt(payment));
   }
 
   protected changeSort(sort: SortState): void {

@@ -47,8 +47,6 @@ export interface RegisterPaymentRequest {
   method: PaymentMethod;
   /** Monto que se cobra; el backend lo valida contra el total del ticket. */
   amount: number;
-  /** Efectivo entregado por el visitante (permite informar el vuelto). Opcional. */
-  receivedAmount?: number;
   /** Observaciones del cajero. Opcional. */
   notes?: string;
 }

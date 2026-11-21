@@ -23,12 +23,12 @@ describe('Layout administrativo', () => {
     await TestBed.inject(AuthService).login('admin@parko.site', 'Admin1234!');
   });
 
-  it('el sidebar muestra los 7 ítems y no incluye "Llaves"', async () => {
+  it('el sidebar muestra los 8 ítems y no incluye "Llaves"', async () => {
     const fixture = TestBed.createComponent(SidebarComponent);
     await fixture.whenStable();
     const el: HTMLElement = fixture.nativeElement;
     const labels = Array.from(el.querySelectorAll('.nav-link__label')).map((n) => n.textContent?.trim());
-    expect(labels).toEqual(['Dashboard', 'Usuarios', 'Vehículos', 'Pagos', 'Reportes', 'Accesos', 'Configuración']);
+    expect(labels).toEqual(['Dashboard', 'Usuarios', 'Vehículos', 'Pagos', 'Carga de saldos', 'Reportes', 'Accesos', 'Configuración']);
     expect(el.textContent).not.toContain('Llaves');
     expect(el.textContent).toContain('Cerrar sesión');
   });
@@ -55,7 +55,8 @@ describe('Layout administrativo', () => {
     const el: HTMLElement = fixture.nativeElement;
     expect(el.querySelector('h1')?.textContent).toContain('Gestión de Usuarios');
     expect(el.querySelector('time')?.textContent).toMatch(/ de .* de \d{4}/);
-    expect(el.textContent).toContain('Sistema operativo');
+    expect(el.textContent).not.toContain('Sistema operativo');
+    expect(el.querySelector('button')).toBeNull(); // sin campana de notificaciones
   });
 
   it('redirige la raíz al dashboard dentro del layout', async () => {

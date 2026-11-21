@@ -14,6 +14,7 @@ const NAV_ITEMS: readonly NavItem[] = [
   { label: 'Usuarios', path: '/admin/usuarios', icon: 'users' },
   { label: 'Vehículos', path: '/admin/vehiculos', icon: 'car' },
   { label: 'Pagos', path: '/admin/pagos', icon: 'payments' },
+  { label: 'Carga de saldos', path: '/admin/saldos', icon: 'wallet' },
   { label: 'Reportes', path: '/admin/reportes', icon: 'reports' },
   { label: 'Accesos', path: '/admin/accesos', icon: 'access' },
   { label: 'Configuración', path: '/admin/configuracion', icon: 'settings' },

@@ -68,12 +68,6 @@
           <div><dt>Pagos pendientes</dt><dd>{{ data.dayStats.paymentsPending | number }}</dd></div>
           <div><dt>Incidencias abiertas</dt><dd>{{ data.dayStats.openIncidents | number }}</dd></div>
         </dl>
-        @for (alert of data.alerts; track alert.message) {
-          <p class="alert" [class]="'alert alert--' + alert.level" role="status">
-            <app-icon name="alert" [size]="14" />
-            {{ alert.message }}
-          </p>
-        }
       </section>
     </div>
 
