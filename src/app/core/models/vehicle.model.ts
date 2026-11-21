@@ -1,17 +1,18 @@
 /**
- * Contrato SUPUESTO de vehículos (pendiente de confirmar con backend).
- * Endpoints: GET/POST /api/v1/admin/vehicles y PUT/DELETE /api/v1/admin/vehicles/{id}
+ * Vehículos (admin-service): GET/POST admin/vehicles, GET/PATCH/DELETE admin/vehicles/{id}.
+ * La baja es lógica: el backend libera la patente agregándole un sufijo "#id".
  */
-export type VehicleType = 'CAR' | 'MOTORCYCLE' | 'PICKUP';
-export type VehicleStatus = 'ACTIVE' | 'SUSPENDED';
+export type VehicleStatus = 'ACTIVE' | 'INACTIVE';
 
 export interface AdminVehicle {
   id: string;
   /** Normalizada: mayúsculas y sin espacios (AB123CD). */
   plate: string;
+  userId: string;
   ownerName: string;
   ownerEmail: string;
-  type: VehicleType;
+  brand: string;
+  model: string;
   status: VehicleStatus;
   /** Fecha ISO 8601 de registro. */
   registeredAt: string;
@@ -20,17 +21,15 @@ export interface AdminVehicle {
 export interface VehicleUpsertRequest {
   plate: string;
   ownerEmail: string;
-  type: VehicleType;
+  brand: string;
+  model: string;
   status: VehicleStatus;
 }
 
-export const VEHICLE_TYPE_LABELS: Record<VehicleType, string> = {
-  CAR: 'Automóvil',
-  MOTORCYCLE: 'Moto',
-  PICKUP: 'Camioneta',
-};
+/** Marca y modelo: máximo de caracteres que acepta el backend. */
+export const VEHICLE_TEXT_MAX_LENGTH = 15;
 
 export const VEHICLE_STATUS_LABELS: Record<VehicleStatus, string> = {
   ACTIVE: 'Activa',
-  SUSPENDED: 'Suspendida',
+  INACTIVE: 'Inactiva',
 };

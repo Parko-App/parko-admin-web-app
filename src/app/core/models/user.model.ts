@@ -1,19 +1,22 @@
 /**
- * Contrato SUPUESTO de usuarios (pendiente de confirmar con backend).
- * Endpoints: GET/POST /api/v1/admin/users y PUT/DELETE /api/v1/admin/users/{id}
+ * Usuarios (admin-service): GET/POST admin/users, GET/PATCH/DELETE admin/users/{id}.
+ * El tipo es el rol del backend. La baja es lógica (active = false).
  */
 import { SortState } from './sort.model';
 
-export type UserType = 'STUDENT' | 'TEACHER' | 'STAFF';
-export type UserStatus = 'ACTIVE' | 'SUSPENDED' | 'INACTIVE';
+export type UserType = 'STUDENT' | 'STAFF' | 'ADMIN';
+export type UserStatus = 'ACTIVE' | 'INACTIVE';
 
 export interface AdminUser {
   id: string;
   fullName: string;
   email: string;
   type: UserType;
-  balance: number;
-  vehicleCount: number;
+  /** Legajo (se deriva del correo). */
+  studentId: string | null;
+  /** null si no se pudo consultar el detalle del usuario. */
+  balance: number | null;
+  vehicleCount: number | null;
   status: UserStatus;
 }
 
@@ -22,7 +25,8 @@ export interface UserUpsertRequest {
   email: string;
   type: UserType;
   status: UserStatus;
-  balance: number;
+  /** Solo en el alta: contraseña inicial (la política la valida el backend). */
+  password?: string;
 }
 
 export interface UserListQuery {
@@ -34,12 +38,11 @@ export interface UserListQuery {
 
 export const USER_TYPE_LABELS: Record<UserType, string> = {
   STUDENT: 'Alumno',
-  TEACHER: 'Docente',
   STAFF: 'Personal',
+  ADMIN: 'Administrador',
 };
 
 export const USER_STATUS_LABELS: Record<UserStatus, string> = {
   ACTIVE: 'Activo',
-  SUSPENDED: 'Suspendido',
   INACTIVE: 'Inactivo',
 };

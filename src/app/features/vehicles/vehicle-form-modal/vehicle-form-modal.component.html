@@ -31,26 +31,35 @@
       }
     </div>
 
-    <div class="row" [class.row--single]="!isEdit">
+    <div class="row">
       <div class="field">
-        <label for="type">Tipo de vehículo</label>
-        <select id="type" formControlName="type">
-          @for (item of types; track item[0]) {
+        <label for="brand">Marca</label>
+        <input id="brand" formControlName="brand" autocomplete="off" [attr.maxlength]="textMax"
+               [attr.aria-invalid]="submitted() && form.controls.brand.invalid" />
+        @if (submitted() && form.controls.brand.invalid) {
+          <p class="field__error">Ingresá la marca.</p>
+        }
+      </div>
+      <div class="field">
+        <label for="model">Modelo</label>
+        <input id="model" formControlName="model" autocomplete="off" [attr.maxlength]="textMax"
+               [attr.aria-invalid]="submitted() && form.controls.model.invalid" />
+        @if (submitted() && form.controls.model.invalid) {
+          <p class="field__error">Ingresá el modelo.</p>
+        }
+      </div>
+    </div>
+
+    @if (isEdit) {
+      <div class="field field--half">
+        <label for="status">Estado</label>
+        <select id="status" formControlName="status">
+          @for (item of statuses; track item[0]) {
             <option [value]="item[0]">{{ item[1] }}</option>
           }
         </select>
       </div>
-      @if (isEdit) {
-        <div class="field">
-          <label for="status">Estado</label>
-          <select id="status" formControlName="status">
-            @for (item of statuses; track item[0]) {
-              <option [value]="item[0]">{{ item[1] }}</option>
-            }
-          </select>
-        </div>
-      }
-    </div>
+    }
   </form>
 
   <ng-container modalFooter>

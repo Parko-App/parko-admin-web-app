@@ -15,6 +15,7 @@
 
     <div class="field">
       <label for="email">Correo institucional</label>
+      <!-- el legajo se deriva del correo: legajo@división.frc.utn.edu.ar -->
       <input id="email" type="email" formControlName="email" autocomplete="off"
              [attr.aria-invalid]="submitted() && form.controls.email.invalid" />
       @if (submitted() && form.controls.email.invalid) {
@@ -24,31 +25,39 @@
       }
     </div>
 
-    <div class="row">
+    @if (!isEdit) {
+      <div class="field">
+        <label for="password">Contraseña inicial</label>
+        <input id="password" type="password" formControlName="password" autocomplete="new-password"
+               [attr.aria-invalid]="submitted() && form.controls.password.invalid"
+               aria-describedby="password-hint" />
+        <p class="field__hint" id="password-hint">Mínimo 10 caracteres, con mayúscula, minúscula, número y carácter especial.</p>
+        @if (submitted() && form.controls.password.invalid) {
+          <p class="field__error">
+            @if (form.controls.password.hasError('required')) { Ingresá una contraseña inicial. } @else { La contraseña no cumple con la política de seguridad. }
+          </p>
+        }
+      </div>
+    }
+
+    <div class="row" [class.row--single]="!isEdit">
       <div class="field">
         <label for="type">Tipo de usuario</label>
         <select id="type" formControlName="type">
-          @for (item of types; track item[0]) {
+          @for (item of isAdmin ? adminType : types; track item[0]) {
             <option [value]="item[0]">{{ item[1] }}</option>
           }
         </select>
       </div>
-      <div class="field">
-        <label for="status">Estado</label>
-        <select id="status" formControlName="status">
-          @for (item of statuses; track item[0]) {
-            <option [value]="item[0]">{{ item[1] }}</option>
-          }
-        </select>
-      </div>
-    </div>
-
-    <div class="field field--half">
-      <label for="balance">{{ isEdit ? 'Saldo ($)' : 'Saldo inicial ($)' }}</label>
-      <input id="balance" type="number" min="0" step="1" formControlName="balance"
-             [attr.aria-invalid]="submitted() && form.controls.balance.invalid" />
-      @if (submitted() && form.controls.balance.invalid) {
-        <p class="field__error">Ingresá un saldo igual o mayor a 0.</p>
+      @if (isEdit) {
+        <div class="field">
+          <label for="status">Estado</label>
+          <select id="status" formControlName="status">
+            @for (item of statuses; track item[0]) {
+              <option [value]="item[0]">{{ item[1] }}</option>
+            }
+          </select>
+        </div>
       }
     </div>
   </form>

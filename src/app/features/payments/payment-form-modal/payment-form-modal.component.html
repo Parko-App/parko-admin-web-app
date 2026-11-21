@@ -4,7 +4,7 @@
       <div class="form-error" role="alert">{{ message }}</div>
     }
 
-    <p class="intro">Pago en efectivo de un ticket de visitante.</p>
+    <p class="intro">Pago en efectivo de un ticket. El monto debe coincidir con el total a cobrar.</p>
 
     <div class="field">
       <label for="pay-ticket">Nro. de ticket</label>
@@ -24,11 +24,6 @@
       @if (showError('amount')) {
         <p class="field__error" id="pay-amount-error">Ingresá un monto mayor a cero.</p>
       }
-    </div>
-
-    <div class="field">
-      <label for="pay-notes">Observaciones <span class="optional">(opcional)</span></label>
-      <textarea id="pay-notes" formControlName="notes" rows="2" [attr.maxlength]="notesMaxLength"></textarea>
     </div>
   </form>
 

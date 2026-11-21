@@ -5,7 +5,7 @@
       id="search"
       type="search"
       [formControl]="searchControl"
-      placeholder="Buscar por patente o usuario…"
+      placeholder="Buscar por patente…"
       autocomplete="off"
     />
   </div>
@@ -18,7 +18,7 @@
     [error]="list.error()"
     loadingMessage="Cargando vehículos…"
     [emptyTitle]="searchControl.value ? 'No se encontraron patentes' : 'Todavía no hay patentes registradas'"
-    [emptyDescription]="searchControl.value ? 'Probá con otra patente o usuario.' : ''"
+    [emptyDescription]="searchControl.value ? 'Probá con otra patente.' : ''"
     (retry)="list.reload()"
   >
     <div class="table-scroll">
@@ -28,7 +28,7 @@
           <tr>
             <th scope="col" appSortHeader="plate" [sort]="list.sort()" (sortChange)="list.changeSort($event)">Patente</th>
             <th scope="col" appSortHeader="ownerName" [sort]="list.sort()" (sortChange)="list.changeSort($event)">Usuario</th>
-            <th scope="col" appSortHeader="type" [sort]="list.sort()" (sortChange)="list.changeSort($event)">Tipo</th>
+            <th scope="col" appSortHeader="vehicle" [sort]="list.sort()" (sortChange)="list.changeSort($event)">Vehículo</th>
             <th scope="col" appSortHeader="status" [sort]="list.sort()" (sortChange)="list.changeSort($event)">Estado</th>
             <th scope="col" appSortHeader="registeredAt" [sort]="list.sort()" (sortChange)="list.changeSort($event)">Registrada desde</th>
             <th scope="col">Acciones</th>
@@ -39,14 +39,14 @@
             <tr>
               <td class="plate">{{ vehicle.plate | plate }}</td>
               <td class="owner">{{ vehicle.ownerName }}</td>
-              <td class="muted">{{ typeLabel(vehicle.type) }}</td>
+              <td class="muted">{{ vehicle.brand }} {{ vehicle.model }}</td>
               <td>
                 <app-status-badge [variant]="statusVariant(vehicle.status)">{{ statusLabel(vehicle.status) }}</app-status-badge>
               </td>
               <td class="muted">{{ vehicle.registeredAt | dateTimeAr: 'date' }}</td>
               <td class="actions">
                 <button type="button" class="link" [attr.aria-label]="'Editar la patente ' + (vehicle.plate | plate)" (click)="openEdit(vehicle)">Editar</button>
-                <button type="button" class="link link--danger" [attr.aria-label]="'Eliminar la patente ' + (vehicle.plate | plate)" (click)="askDelete(vehicle)">Eliminar</button>
+                <button type="button" class="link link--danger" [attr.aria-label]="'Dar de baja la patente ' + (vehicle.plate | plate)" (click)="askDelete(vehicle)">Dar de baja</button>
               </td>
             </tr>
           }
@@ -78,9 +78,9 @@
 
 <app-confirm-dialog
   [open]="deleting() !== null"
-  title="Confirmar eliminación"
+  title="Confirmar baja"
   [message]="deleteMessage()"
-  confirmLabel="Eliminar"
+  confirmLabel="Dar de baja"
   [danger]="true"
   (confirmed)="confirmDelete()"
   (cancelled)="cancelDelete()"

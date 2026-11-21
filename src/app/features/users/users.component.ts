@@ -31,8 +31,8 @@ const PAGE_SIZE = 10;
  */
 export const LOW_BALANCE_THRESHOLD = 500;
 
-const TYPE_VARIANTS: Record<UserType, BadgeVariant> = { STUDENT: 'neutral', TEACHER: 'info', STAFF: 'success' };
-const STATUS_VARIANTS: Record<UserStatus, BadgeVariant> = { ACTIVE: 'success', SUSPENDED: 'danger', INACTIVE: 'neutral' };
+const TYPE_VARIANTS: Record<UserType, BadgeVariant> = { STUDENT: 'neutral', STAFF: 'success', ADMIN: 'info' };
+const STATUS_VARIANTS: Record<UserStatus, BadgeVariant> = { ACTIVE: 'success', INACTIVE: 'neutral' };
 
 @Component({
   selector: 'app-users',
@@ -66,7 +66,7 @@ export class UsersComponent {
   protected readonly deleting = signal<AdminUser | null>(null);
   protected readonly deleteMessage = computed(() => {
     const user = this.deleting();
-    return user ? `¿Está seguro de que desea eliminar a ${user.fullName}? Esta acción no se puede deshacer.` : '';
+    return user ? `¿Está seguro de que desea dar de baja a ${user.fullName}? La cuenta quedará inactiva y no podrá ingresar al sistema.` : '';
   });
 
   constructor() {
@@ -77,7 +77,7 @@ export class UsersComponent {
   protected typeVariant(type: UserType): BadgeVariant { return TYPE_VARIANTS[type]; }
   protected statusLabel(status: UserStatus): string { return USER_STATUS_LABELS[status]; }
   protected statusVariant(status: UserStatus): BadgeVariant { return STATUS_VARIANTS[status]; }
-  protected isLowBalance(user: AdminUser): boolean { return user.balance < LOW_BALANCE_THRESHOLD; }
+  protected isLowBalance(user: AdminUser): boolean { return user.balance !== null && user.balance < LOW_BALANCE_THRESHOLD; }
 
   // ---- alta / edición
   protected openCreate(): void {
@@ -131,8 +131,8 @@ export class UsersComponent {
     try {
       await firstValueFrom(this.service.delete(user.id));
       this.deleting.set(null);
-      this.toast.success(`Se eliminó a ${user.fullName}.`);
-      this.list.reloadAfterRemoval();
+      this.toast.success(`Se dio de baja a ${user.fullName}.`);
+      this.list.reload();
     } catch (error) {
       this.deleting.set(null);
       this.toast.error(toErrorMessage(error));

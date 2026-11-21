@@ -5,7 +5,7 @@
       id="search"
       type="search"
       [formControl]="searchControl"
-      placeholder="Buscar por nombre, email o tipo…"
+      placeholder="Buscar por nombre, correo o legajo…"
       autocomplete="off"
     />
   </div>
@@ -21,7 +21,7 @@
     [error]="list.error()"
     loadingMessage="Cargando usuarios…"
     [emptyTitle]="searchControl.value ? 'No se encontraron usuarios' : 'Todavía no hay usuarios'"
-    [emptyDescription]="searchControl.value ? 'Probá con otro nombre, email o tipo.' : ''"
+    [emptyDescription]="searchControl.value ? 'Probá con otro nombre, correo o legajo.' : ''"
     (retry)="list.reload()"
   >
     <div class="table-scroll">
@@ -47,16 +47,16 @@
                 <app-status-badge [variant]="typeVariant(user.type)">{{ typeLabel(user.type) }}</app-status-badge>
               </td>
               <td class="mono" [class.low]="isLowBalance(user)">
-                {{ user.balance | currencyAr }}
+                {{ user.balance === null ? '—' : (user.balance | currencyAr) }}
                 @if (isLowBalance(user)) { <span class="sr-only">(saldo bajo)</span> }
               </td>
-              <td class="center muted">{{ user.vehicleCount }}</td>
+              <td class="center muted">{{ user.vehicleCount ?? '—' }}</td>
               <td>
                 <app-status-badge [variant]="statusVariant(user.status)">{{ statusLabel(user.status) }}</app-status-badge>
               </td>
               <td class="actions">
                 <button type="button" class="link" [attr.aria-label]="'Editar a ' + user.fullName" (click)="openEdit(user)">Editar</button>
-                <button type="button" class="link link--danger" [attr.aria-label]="'Eliminar a ' + user.fullName" (click)="askDelete(user)">Eliminar</button>
+                <button type="button" class="link link--danger" [attr.aria-label]="'Dar de baja a ' + user.fullName" (click)="askDelete(user)">Dar de baja</button>
               </td>
             </tr>
           }
@@ -88,9 +88,9 @@
 
 <app-confirm-dialog
   [open]="deleting() !== null"
-  title="Confirmar eliminación"
+  title="Confirmar baja"
   [message]="deleteMessage()"
-  confirmLabel="Eliminar"
+  confirmLabel="Dar de baja"
   [danger]="true"
   (confirmed)="confirmDelete()"
   (cancelled)="cancelDelete()"

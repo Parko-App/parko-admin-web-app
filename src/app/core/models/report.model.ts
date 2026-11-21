@@ -1,6 +1,6 @@
 /**
- * Contratos SUPUESTOS del módulo de Reportes (a confirmar con el backend).
- * Cada reporte recibe un rango de fechas (AAAA-MM-DD, horario de Argentina) y devuelve un registro por día:
+ * Modelos de Reportes (admin-service: GET admin/reports/{occupancy|revenue|access}?from=&to=).
+ * Los servicios HTTP convierten la respuesta del backend a estas formas. Cada reporte recibe un rango de fechas (AAAA-MM-DD, horario de Argentina) y devuelve un registro por día:
  *   GET admin/reports/occupancy?from=&to=  -> OccupancyReport
  *   GET admin/reports/revenue?from=&to=    -> RevenueReport
  *   GET admin/reports/access?from=&to=     -> AccessReport

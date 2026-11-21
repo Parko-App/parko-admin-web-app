@@ -9,6 +9,8 @@
 }
 
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.row--single { grid-template-columns: 1fr; }
+.field__hint { margin: 4px 0 0; font-size: 12px; color: var(--color-muted); }
 
 .field {
   margin-bottom: 14px;

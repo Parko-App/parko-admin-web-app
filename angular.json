@@ -38,14 +38,16 @@
               "src/styles.scss"
             ],
             "allowedCommonJsDependencies": [
-              "html2canvas",
               "canvg",
               "core-js",
+              "dijkstrajs",
+              "dompurify",
+              "fflate",
+              "html2canvas",
+              "qrcode",
               "raf",
               "rgbcolor",
-              "svg-pathdata",
-              "dompurify",
-              "fflate"
+              "svg-pathdata"
             ]
           },
           "configurations": {
