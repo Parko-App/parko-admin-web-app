@@ -55,3 +55,6 @@
 
 .row--single { grid-template-columns: 1fr; }
 .plate-input { text-transform: uppercase; font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace; }
+
+.field--half { max-width: calc(50% - 8px); }
+@media (max-width: 700px) { .field--half { max-width: none; } }

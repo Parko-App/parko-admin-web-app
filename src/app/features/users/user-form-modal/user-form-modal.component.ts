@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, output, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import {
   AdminUser,
   USER_STATUS_LABELS,
@@ -9,6 +9,16 @@ import {
   UserUpsertRequest,
 } from '../../../core/models/user.model';
 import { ModalComponent } from '../../../shared/components/modal/modal.component';
+
+/** Misma política que identity-service: 10+ caracteres con mayúscula, minúscula, número y carácter especial. */
+export function passwordPolicyValidator(control: AbstractControl): ValidationErrors | null {
+  const value = String(control.value ?? '');
+  if (!value) {
+    return null; // lo cubre Validators.required
+  }
+  const valid = value.length >= 10 && /[A-Z]/.test(value) && /[a-z]/.test(value) && /\d/.test(value) && /[^A-Za-z0-9]/.test(value);
+  return valid ? null : { passwordPolicy: true };
+}
 
 /** Alta (user = null) y edición de un usuario. */
 @Component({
@@ -27,7 +37,9 @@ export class UserFormModalComponent {
   readonly saved = output<UserUpsertRequest>();
   readonly closed = output<void>();
 
-  protected readonly types = Object.entries(USER_TYPE_LABELS) as [UserType, string][];
+  /** Un administrador no se crea ni se cambia de rol desde acá (lo impide el backend). */
+  protected readonly types = (Object.entries(USER_TYPE_LABELS) as [UserType, string][]).filter(([type]) => type !== 'ADMIN');
+  protected readonly adminType = [['ADMIN', USER_TYPE_LABELS.ADMIN]] as [UserType, string][];
   protected readonly statuses = Object.entries(USER_STATUS_LABELS) as [UserStatus, string][];
   protected readonly submitted = signal(false);
 
@@ -36,7 +48,7 @@ export class UserFormModalComponent {
     email: ['', [Validators.required, Validators.email]],
     type: ['STUDENT' as UserType, Validators.required],
     status: ['ACTIVE' as UserStatus, Validators.required],
-    balance: [0, [Validators.required, Validators.min(0)]],
+    password: ['', [Validators.required, passwordPolicyValidator]],
   });
 
   constructor() {
@@ -47,18 +59,33 @@ export class UserFormModalComponent {
       }
       const user = this.user();
       this.submitted.set(false);
+      // La contraseña solo se define al crear el usuario.
+      if (user) {
+        this.form.controls.password.disable();
+      } else {
+        this.form.controls.password.enable();
+      }
+      if (user?.type === 'ADMIN') {
+        this.form.controls.type.disable();
+      } else {
+        this.form.controls.type.enable();
+      }
       this.form.reset({
         fullName: user?.fullName ?? '',
         email: user?.email ?? '',
         type: user?.type ?? 'STUDENT',
         status: user?.status ?? 'ACTIVE',
-        balance: user?.balance ?? 0,
+        password: '',
       });
     });
   }
 
   protected get isEdit(): boolean {
     return this.user() !== null;
+  }
+
+  protected get isAdmin(): boolean {
+    return this.user()?.type === 'ADMIN';
   }
 
   protected submit(): void {
@@ -72,7 +99,7 @@ export class UserFormModalComponent {
       email: value.email.trim().toLowerCase(),
       type: value.type,
       status: value.status,
-      balance: Number(value.balance),
+      ...(this.isEdit ? {} : { password: value.password }),
     });
   }
 }

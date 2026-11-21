@@ -54,25 +54,25 @@ describe('utilidades de patente', () => {
 });
 
 describe('VehiclesComponent', () => {
-  it('lista las patentes con usuario, tipo, estado y fecha de registro', async () => {
+  it('lista las patentes con usuario, vehículo, estado y fecha de registro', async () => {
     const { el, plates } = await setup();
     expect(plates().length).toBe(10);
     const first = el.querySelector('.vehicles tbody tr')!.textContent!;
     expect(first).toContain('AB 123 CD');
     expect(first).toContain('Lucas Fernández');
-    expect(first).toContain('Automóvil');
+    expect(first).toContain('Toyota Corolla');
     expect(first).toContain('Activa');
     expect(first).toContain('12/03/2025');
-    expect(el.textContent).toContain('Suspendida');
-    expect(el.textContent).toContain('Camioneta');
+    expect(el.textContent).toContain('Inactiva');
+    expect(el.textContent).toContain('Hilux');
   });
 
-  it('busca por patente (con o sin espacios) o por usuario', async () => {
+  it('busca por patente (con o sin espacios)', async () => {
     const { plates, type, settle } = await setup();
     type('#search', 'ab 123');
     await settle(350);
     expect(plates()).toEqual(['AB 123 CD']);
-    type('#search', 'valentina');
+    type('#search', 'gh');
     await settle(350);
     expect(plates()).toEqual(['GH 789 IJ', 'EF 456 GH']);
   });
@@ -103,6 +103,8 @@ describe('VehiclesComponent', () => {
     type('#ownerEmail', 'a.lopez@utn.edu.ar');
     await submit();
     expect(el.textContent).toContain('Formato inválido');
+    expect(el.textContent).toContain('Ingresá la marca.');
+    expect(el.textContent).toContain('Ingresá el modelo.');
   });
 
   it('registra una patente y refresca el listado', async () => {
@@ -111,6 +113,8 @@ describe('VehiclesComponent', () => {
     await settle();
     type('#plate', 'zz 999 xx');
     type('#ownerEmail', 'l.mendez@utn.edu.ar');
+    type('#brand', 'Ford');
+    type('#model', 'Ka');
     await submit();
     expect(el.querySelector('[role=dialog]')).toBeNull();
     expect(toast.toasts()[0].message).toBe('Patente registrada correctamente.');
@@ -124,6 +128,8 @@ describe('VehiclesComponent', () => {
     await settle();
     type('#plate', 'AB123CD');
     type('#ownerEmail', 'a.lopez@utn.edu.ar');
+    type('#brand', 'Ford');
+    type('#model', 'Ka');
     await submit();
     expect(el.querySelector('[role=alert]')?.textContent).toContain('Esa patente ya está registrada.');
 
@@ -141,9 +147,11 @@ describe('VehiclesComponent', () => {
     expect(el.querySelector('[role=dialog]')?.textContent).toContain('Editar patente');
     expect((el.querySelector('#plate') as HTMLInputElement).value).toBe('AB 123 CD');
     expect((el.querySelector('#ownerEmail') as HTMLInputElement).value).toBe('lucas.fernandez@utn.edu.ar');
+    expect((el.querySelector('#brand') as HTMLInputElement).value).toBe('Toyota');
+    expect((el.querySelector('#model') as HTMLInputElement).value).toBe('Corolla');
     expect(el.querySelector('#status')).not.toBeNull();
     const status = el.querySelector('#status') as HTMLSelectElement;
-    status.value = 'SUSPENDED';
+    status.value = 'INACTIVE';
     status.dispatchEvent(new Event('change'));
     type('#plate', 'AB 123 CE');
     await submit();
@@ -158,17 +166,16 @@ describe('VehiclesComponent', () => {
     expect(el.querySelector('#status')).toBeNull();
   });
 
-  it('confirma la eliminación nombrando la patente y su titular', async () => {
+  it('confirma la baja nombrando la patente y su titular (baja lógica)', async () => {
     const { el, click, settle, toast } = await setup();
-    click('.link--danger', 5); // OP 654 QR - Diego Morales
+    click('.link--danger', 8); // AA 222 BB - Carlos Pérez
     await settle();
     const dialog = el.querySelector('[role=dialog]')!;
-    expect(dialog.textContent).toContain(
-      '¿Está seguro de que desea eliminar la patente OP 654 QR de Diego Morales? Esta acción no se puede deshacer.',
-    );
+    expect(dialog.textContent).toContain('Confirmar baja');
+    expect(dialog.textContent).toContain('¿Está seguro de que desea dar de baja la patente AA 222 BB de Carlos Pérez?');
     click('.dialog__footer .btn--primary');
     await settle(30);
-    expect(el.textContent).not.toContain('OP 654 QR');
-    expect(toast.toasts()[0].message).toBe('Se eliminó la patente OP 654 QR.');
+    expect(toast.toasts()[0].message).toBe('Se dio de baja la patente AA 222 BB.');
+    expect(el.querySelectorAll('.vehicles tbody tr')[8].textContent).toContain('Inactiva');
   });
 });

@@ -3,9 +3,8 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   AdminVehicle,
   VEHICLE_STATUS_LABELS,
-  VEHICLE_TYPE_LABELS,
+  VEHICLE_TEXT_MAX_LENGTH,
   VehicleStatus,
-  VehicleType,
   VehicleUpsertRequest,
 } from '../../../core/models/vehicle.model';
 import { ModalComponent } from '../../../shared/components/modal/modal.component';
@@ -28,14 +27,15 @@ export class VehicleFormModalComponent {
   readonly saved = output<VehicleUpsertRequest>();
   readonly closed = output<void>();
 
-  protected readonly types = Object.entries(VEHICLE_TYPE_LABELS) as [VehicleType, string][];
+  protected readonly textMax = VEHICLE_TEXT_MAX_LENGTH;
   protected readonly statuses = Object.entries(VEHICLE_STATUS_LABELS) as [VehicleStatus, string][];
   protected readonly submitted = signal(false);
 
   protected readonly form = inject(FormBuilder).nonNullable.group({
     plate: ['', [Validators.required, plateValidator]],
     ownerEmail: ['', [Validators.required, Validators.email]],
-    type: ['CAR' as VehicleType, Validators.required],
+    brand: ['', [Validators.required, Validators.maxLength(VEHICLE_TEXT_MAX_LENGTH)]],
+    model: ['', [Validators.required, Validators.maxLength(VEHICLE_TEXT_MAX_LENGTH)]],
     status: ['ACTIVE' as VehicleStatus, Validators.required],
   });
 
@@ -49,7 +49,8 @@ export class VehicleFormModalComponent {
       this.form.reset({
         plate: vehicle ? formatPlate(vehicle.plate) : '',
         ownerEmail: vehicle?.ownerEmail ?? '',
-        type: vehicle?.type ?? 'CAR',
+        brand: vehicle?.brand ?? '',
+        model: vehicle?.model ?? '',
         status: vehicle?.status ?? 'ACTIVE',
       });
     });
@@ -68,7 +69,8 @@ export class VehicleFormModalComponent {
     this.saved.emit({
       plate: normalizePlate(value.plate),
       ownerEmail: value.ownerEmail.trim().toLowerCase(),
-      type: value.type,
+      brand: value.brand.trim(),
+      model: value.model.trim(),
       status: value.status,
     });
   }

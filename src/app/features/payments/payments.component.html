@@ -29,14 +29,14 @@
       </div>
       <dl class="result__grid">
         <div><dt>Ingreso</dt><dd>{{ found.entryAt | dateTimeAr }}</dd></div>
-        <div><dt>Días a cobrar</dt><dd>{{ found.days }}</dd></div>
-        <div><dt>Tarifa por día</dt><dd>{{ found.dailyRate | currencyAr }}</dd></div>
+        <div><dt>Patente</dt><dd>{{ found.plate ? (found.plate | plate) : '—' }}</dd></div>
+        <div><dt>Tipo</dt><dd>{{ sessionTypeLabel(found.sessionType) }}</dd></div>
         <div><dt>Total a cobrar</dt><dd class="result__total">{{ found.amountDue | currencyAr }}</dd></div>
       </dl>
       @if (found.status === 'PENDING') {
         <button type="button" class="btn btn--primary" (click)="askCharge()">Registrar cobro en efectivo</button>
       } @else {
-        <p class="result__paid">Este ticket ya fue cobrado.</p>
+        <p class="result__paid">{{ found.status === 'PAID' ? 'Este ticket ya fue cobrado.' : 'Este ticket no admite cobro (' + statusLabel(found.status).toLowerCase() + ').' }}</p>
       }
     </div>
   }
@@ -70,8 +70,8 @@
               <td class="mono">{{ payment.ticketNumber }}</td>
               <td class="mono">{{ payment.paidAt | dateTimeAr: 'time' }}</td>
               <td class="amount">{{ payment.amount | currencyAr }}</td>
-              <td class="muted">{{ methodLabel(payment.method) }}</td>
-              <td class="muted">{{ payment.cashierName }}</td>
+              <td class="muted">{{ payment.method ? methodLabel(payment.method) : '—' }}</td>
+              <td class="muted">{{ payment.cashierName ?? '—' }}</td>
               <td><div class="actions">
                 <button type="button" class="link" [attr.aria-label]="'Ver detalle del ticket ' + payment.ticketNumber" (click)="openDetail(payment)">Ver detalle</button>
                 <button type="button" class="link" [attr.aria-label]="'Generar PDF del ticket ' + payment.ticketNumber" (click)="downloadPdf(payment)">Generar PDF</button>

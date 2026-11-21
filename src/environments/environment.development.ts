@@ -3,6 +3,8 @@
 export const environment = {
   production: false,
   apiUrl: '/api/v1',
+  // Capacidad total del estacionamiento (base de los porcentajes de ocupación). PROVISORIO: el backend no la informa.
+  parkingCapacity: 247,
   useMocks: true,
   firebase: {
     apiKey: 'AIzaSyC98baiG5R_rU6r_p0-YZ2uGrh06hjrZD0',

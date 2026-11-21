@@ -6,9 +6,7 @@ import { toErrorMessage } from '../../core/http/error-message';
 import {
   AdminVehicle,
   VEHICLE_STATUS_LABELS,
-  VEHICLE_TYPE_LABELS,
   VehicleStatus,
-  VehicleType,
   VehicleUpsertRequest,
 } from '../../core/models/vehicle.model';
 import { ToastService } from '../../core/notifications/toast.service';
@@ -25,7 +23,7 @@ import { VehicleFormModalComponent } from './vehicle-form-modal/vehicle-form-mod
 import { VehiclesService } from './vehicles.service';
 
 const PAGE_SIZE = 10;
-const STATUS_VARIANTS: Record<VehicleStatus, BadgeVariant> = { ACTIVE: 'success', SUSPENDED: 'danger' };
+const STATUS_VARIANTS: Record<VehicleStatus, BadgeVariant> = { ACTIVE: 'success', INACTIVE: 'neutral' };
 
 @Component({
   selector: 'app-vehicles',
@@ -59,7 +57,7 @@ export class VehiclesComponent {
   protected readonly deleteMessage = computed(() => {
     const vehicle = this.deleting();
     return vehicle
-      ? `¿Está seguro de que desea eliminar la patente ${formatPlate(vehicle.plate)} de ${vehicle.ownerName}? Esta acción no se puede deshacer.`
+      ? `¿Está seguro de que desea dar de baja la patente ${formatPlate(vehicle.plate)} de ${vehicle.ownerName}? La patente quedará inactiva y se liberará para otro vehículo.`
       : '';
   });
 
@@ -67,7 +65,6 @@ export class VehiclesComponent {
     this.list.bindSearch(this.searchControl);
   }
 
-  protected typeLabel(type: VehicleType): string { return VEHICLE_TYPE_LABELS[type]; }
   protected statusLabel(status: VehicleStatus): string { return VEHICLE_STATUS_LABELS[status]; }
   protected statusVariant(status: VehicleStatus): BadgeVariant { return STATUS_VARIANTS[status]; }
 
@@ -121,8 +118,8 @@ export class VehiclesComponent {
     try {
       await firstValueFrom(this.service.delete(vehicle.id));
       this.deleting.set(null);
-      this.toast.success(`Se eliminó la patente ${formatPlate(vehicle.plate)}.`);
-      this.list.reloadAfterRemoval();
+      this.toast.success(`Se dio de baja la patente ${formatPlate(vehicle.plate)}.`);
+      this.list.reload();
     } catch (error) {
       this.deleting.set(null);
       this.toast.error(toErrorMessage(error));

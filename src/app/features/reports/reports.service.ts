@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable, map, of } from 'rxjs';
+import { environment } from '../../../environments/environment';
 import { USE_MOCKS } from '../../core/config/tokens';
 import {
   AccessDay,
@@ -19,22 +20,69 @@ export abstract class ReportsService {
   abstract access(range: DateRange): Observable<AccessReport>;
 }
 
+// ---- API real (admin-service)
+
+interface OccupancyReportDto {
+  days: { date: string; peak: number; average: number }[];
+}
+
+interface RevenueReportDto {
+  days: { date: string; registered: number; visitors: number }[];
+}
+
+interface AccessReportDto {
+  days: {
+    date: string;
+    registeredEntries: number;
+    registeredExits: number;
+    visitorEntries: number;
+    visitorExits: number;
+  }[];
+}
+
 @Injectable()
 export class HttpReportsService extends ReportsService {
   private readonly api = inject(ApiClient);
 
+  /** La capacidad no la informa el backend: sale de la configuración del entorno. */
   occupancy(range: DateRange): Observable<OccupancyReport> {
-    return this.api.get<OccupancyReport>('admin/reports/occupancy', { ...range });
+    return this.api.get<OccupancyReportDto>('admin/reports/occupancy', { ...range }).pipe(
+      map((report) => ({
+        capacity: environment.parkingCapacity,
+        days: report.days.map((day) => ({ date: day.date, peak: day.peak, average: day.average })),
+      })),
+    );
   }
 
   revenue(range: DateRange): Observable<RevenueReport> {
-    return this.api.get<RevenueReport>('admin/reports/revenue', { ...range });
+    return this.api.get<RevenueReportDto>('admin/reports/revenue', { ...range }).pipe(
+      map((report) => ({
+        days: report.days.map((day) => ({
+          date: day.date,
+          registered: Number(day.registered),
+          visitors: Number(day.visitors),
+        })),
+      })),
+    );
   }
 
+  /** Ingresos y egresos suman registrados y visitantes; "Visitantes" y "Registrados" cuentan ingresos de cada tipo. */
   access(range: DateRange): Observable<AccessReport> {
-    return this.api.get<AccessReport>('admin/reports/access', { ...range });
+    return this.api.get<AccessReportDto>('admin/reports/access', { ...range }).pipe(
+      map((report) => ({
+        days: report.days.map((day) => ({
+          date: day.date,
+          entries: day.registeredEntries + day.visitorEntries,
+          exits: day.registeredExits + day.visitorExits,
+          visitors: day.visitorEntries,
+          registered: day.registeredEntries,
+        })),
+      })),
+    );
   }
 }
+
+// ---- Datos de demostración (solo con useMocks: true)
 
 export const MOCK_CAPACITY = 247;
 

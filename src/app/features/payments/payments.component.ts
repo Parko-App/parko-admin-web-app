@@ -7,7 +7,9 @@ import {
   PaymentMethod,
   PaymentRecord,
   RegisterPaymentRequest,
+  TICKET_SESSION_TYPE_LABELS,
   TICKET_STATUS_LABELS,
+  TicketSessionType,
   TicketStatus,
   TodayPayments,
   VisitorTicket,
@@ -19,6 +21,7 @@ import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/c
 import { SortHeaderComponent } from '../../shared/components/sort-header/sort-header.component';
 import { BadgeVariant, StatusBadgeComponent } from '../../shared/components/status-badge/status-badge.component';
 import { CurrencyArPipe } from '../../shared/pipes/currency-ar.pipe';
+import { PlatePipe } from '../../shared/pipes/plate.pipe';
 import { DateTimeArPipe } from '../../shared/pipes/date-time-ar.pipe';
 import { AsyncStatus } from '../../shared/utils/async-state';
 import { ReceiptDialogComponent } from '../../shared/components/receipt-dialog/receipt-dialog.component';
@@ -27,13 +30,14 @@ import { ReceiptService } from '../../shared/receipt/receipt.service';
 import { PaymentFormModalComponent } from './payment-form-modal/payment-form-modal.component';
 import { PaymentsService } from './payments.service';
 
-const TICKET_VARIANTS: Record<TicketStatus, BadgeVariant> = { PENDING: 'warning', PAID: 'success' };
+const TICKET_VARIANTS: Record<TicketStatus, BadgeVariant> = { PENDING: 'warning', PAID: 'success', USED: 'neutral', CANCELLED: 'neutral' };
 
 @Component({
   selector: 'app-payments',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
+    PlatePipe,
     AsyncStateComponent,
     ConfirmDialogComponent,
     SortHeaderComponent,
@@ -88,6 +92,7 @@ export class PaymentsComponent {
 
   protected statusLabel(status: TicketStatus): string { return TICKET_STATUS_LABELS[status]; }
   protected statusVariant(status: TicketStatus): BadgeVariant { return TICKET_VARIANTS[status]; }
+  protected sessionTypeLabel(type: TicketSessionType): string { return TICKET_SESSION_TYPE_LABELS[type]; }
   protected methodLabel(method: PaymentMethod): string { return PAYMENT_METHOD_LABELS[method]; }
 
   protected async search(): Promise<void> {

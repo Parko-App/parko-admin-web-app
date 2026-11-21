@@ -45,7 +45,6 @@ describe('UsersComponent', () => {
     expect(first).toContain('Alumno');
     expect(first).toContain('$4.200');
     expect(first).toContain('Activo');
-    expect(el.textContent).toContain('Suspendido');
     expect(el.textContent).toContain('Inactivo');
   });
 
@@ -55,16 +54,17 @@ describe('UsersComponent', () => {
     expect(low).toEqual(['$300 (saldo bajo)', '$0 (saldo bajo)']);
   });
 
-  it('filtra por nombre, email o tipo (sin distinguir tildes) y vuelve a la página 1', async () => {
+  it('filtra por nombre, correo o legajo (sin distinguir tildes) y vuelve a la página 1', async () => {
     const { el, type, settle } = await setup();
     type('#search', 'sofia');
     await settle(350);
     expect(el.querySelectorAll('.users tbody tr').length).toBe(1);
     expect(el.textContent).toContain('1 usuarios');
 
-    type('#search', 'docente');
+    type('#search', '82116');
     await settle(350);
-    expect(el.querySelectorAll('.users tbody tr').length).toBe(2);
+    expect(el.querySelectorAll('.users tbody tr').length).toBe(1);
+    expect(el.textContent).toContain('Lucas Fernández');
   });
 
   it('muestra el estado vacío cuando no hay coincidencias', async () => {
@@ -83,6 +83,20 @@ describe('UsersComponent', () => {
     await settle();
     expect(el.textContent).toContain('Ingresá el nombre completo.');
     expect(el.textContent).toContain('Ingresá el correo.');
+    expect(el.textContent).toContain('Ingresá una contraseña inicial.');
+  });
+
+  it('exige que la contraseña cumpla la política de seguridad', async () => {
+    const { el, click, type, settle } = await setup();
+    click('.btn--primary');
+    await settle();
+    type('#fullName', 'Nuevo Usuario');
+    type('#email', 'nuevo@utn.edu.ar');
+    type('#password', 'corta');
+    (el.querySelector('#user-form') as HTMLFormElement).dispatchEvent(new Event('submit'));
+    await settle();
+    expect(el.textContent).toContain('La contraseña no cumple con la política de seguridad.');
+    expect(el.querySelector('#status')).toBeNull(); // el estado solo se elige al editar
   });
 
   it('crea un usuario y refresca el listado', async () => {
@@ -91,7 +105,7 @@ describe('UsersComponent', () => {
     await settle();
     type('#fullName', 'Nuevo Usuario');
     type('#email', 'nuevo@utn.edu.ar');
-    type('#balance', '500');
+    type('#password', 'Clave-Segura-2026');
     (el.querySelector('#user-form') as HTMLFormElement).dispatchEvent(new Event('submit'));
     await settle(30);
     expect(el.querySelector('[role=dialog]')).toBeNull();
@@ -107,6 +121,7 @@ describe('UsersComponent', () => {
     await settle();
     type('#fullName', 'Otra Persona');
     type('#email', 'lucas.fernandez@utn.edu.ar');
+    type('#password', 'Clave-Segura-2026');
     (el.querySelector('#user-form') as HTMLFormElement).dispatchEvent(new Event('submit'));
     await settle(30);
     expect(el.querySelector('[role=alert]')?.textContent).toContain('Ya existe un usuario con ese correo.');
@@ -119,7 +134,7 @@ describe('UsersComponent', () => {
     await settle();
     expect(el.querySelector('[role=dialog]')?.textContent).toContain('Editar usuario');
     expect((el.querySelector('#fullName') as HTMLInputElement).value).toBe('Lucas Fernández');
-    expect((el.querySelector('#balance') as HTMLInputElement).value).toBe('4200');
+    expect(el.querySelector('#password')).toBeNull(); // la contraseña solo se define al crear
     type('#fullName', 'Lucas F. Fernández');
     (el.querySelector('#user-form') as HTMLFormElement).dispatchEvent(new Event('submit'));
     await settle(30);
@@ -127,30 +142,30 @@ describe('UsersComponent', () => {
     expect(el.textContent).toContain('Lucas F. Fernández');
   });
 
-  it('pide confirmación con el nombre del usuario antes de eliminar', async () => {
+  it('pide confirmación con el nombre del usuario antes de darlo de baja', async () => {
     const { el, click, settle, toast } = await setup();
     click('.link--danger', 2); // Sofía Herrera
     await settle();
     const dialog = el.querySelector('[role=dialog]')!;
-    expect(dialog.textContent).toContain('Confirmar eliminación');
-    expect(dialog.textContent).toContain('¿Está seguro de que desea eliminar a Sofía Herrera? Esta acción no se puede deshacer.');
+    expect(dialog.textContent).toContain('Confirmar baja');
+    expect(dialog.textContent).toContain('¿Está seguro de que desea dar de baja a Sofía Herrera?');
     click('.dialog__footer .btn--primary');
     await settle(30);
     expect(el.querySelector('[role=dialog]')).toBeNull();
-    expect(el.textContent).not.toContain('Sofía Herrera');
-    expect(el.textContent).toContain('9 usuarios');
-    expect(toast.toasts()[0].message).toBe('Se eliminó a Sofía Herrera.');
+    expect(toast.toasts()[0].message).toBe('Se dio de baja a Sofía Herrera.');
+    // baja lógica: sigue en el listado, como inactivo
+    expect(el.textContent).toContain('10 usuarios');
+    expect(el.querySelectorAll('.users tbody tr')[2].textContent).toContain('Inactivo');
   });
 
-  it('cancelar la eliminación no borra al usuario', async () => {
+  it('cancelar la baja no modifica al usuario', async () => {
     const { el, click, settle } = await setup();
     click('.link--danger', 0);
     await settle();
     click('.dialog__footer .btn:not(.btn--primary)');
     await settle();
     expect(el.querySelector('[role=dialog]')).toBeNull();
-    expect(el.textContent).toContain('Lucas Fernández');
-    expect(el.textContent).toContain('10 usuarios');
+    expect(el.querySelector('.users tbody tr')?.textContent).toContain('Activo');
   });
 
   const names = (el: HTMLElement) =>
@@ -180,11 +195,11 @@ describe('UsersComponent', () => {
 
   it('al ordenar conserva la búsqueda', async () => {
     const { el, click, type, settle } = await setup();
-    type('#search', 'alumno');
+    type('#search', 'utn.edu.ar');
     await settle(350);
     click('th[appSortHeader="balance"] button');
     await settle();
-    expect(el.textContent).toContain('6 usuarios');
+    expect(el.textContent).toContain('10 usuarios');
     expect(names(el)[0]).toBe('Diego Morales');
   });
 });

@@ -89,7 +89,9 @@ describe('PaymentsComponent', () => {
     const result = el.querySelector('.result')!;
     expect(result.textContent).toContain(MOCK_SAMPLE_TICKETS[1]);
     expect(result.textContent).toContain('Pendiente de cobro');
-    expect(result.textContent).toContain('$2.400');
+    expect(result.textContent).toContain('$1.500');
+    expect(result.textContent).toContain('KL 321 MN');
+    expect(result.textContent).toContain('Usuario registrado');
     expect(result.textContent).toContain('Registrar cobro en efectivo');
   });
 
@@ -99,7 +101,7 @@ describe('PaymentsComponent', () => {
     click('.result .btn--primary');
     await settle();
     expect(el.querySelector('[role=dialog]')?.textContent).toContain(`${MOCK_SAMPLE_TICKETS[0]}`);
-    expect(el.querySelector('[role=dialog]')?.textContent).toContain('$1.200');
+    expect(el.querySelector('[role=dialog]')?.textContent).toContain('$3.000');
     // el botón de confirmar del diálogo
     (el.querySelectorAll('[role=dialog] .btn--primary')[0] as HTMLElement).click();
     await settle(30);
@@ -107,7 +109,7 @@ describe('PaymentsComponent', () => {
     expect(toast.toasts()[0].message).toContain('Cobro registrado');
     expect(tickets().length).toBe(6);
     expect(el.querySelector('.summary')?.textContent).toContain('6 cobros registrados');
-    expect(el.querySelector('.summary')?.textContent).toContain('Total: $9.840');
+    expect(el.querySelector('.summary')?.textContent).toContain('Total: $11.640');
     expect(el.querySelector('.result')?.textContent).toContain('Cobrado');
     expect(el.querySelector('.result .btn--primary')).toBeNull();
   });
@@ -141,7 +143,7 @@ describe('PaymentsComponent', () => {
       expect(dialog.querySelector('#pay-ticket')).not.toBeNull();
       expect(dialog.querySelector('#pay-amount')).not.toBeNull();
       expect(dialog.querySelector('#pay-received')).toBeNull();
-      expect(dialog.querySelector('#pay-notes')).not.toBeNull();
+      expect(dialog.querySelector('#pay-notes')).toBeNull();
     });
 
     it('valida ticket y monto', async () => {
@@ -157,12 +159,12 @@ describe('PaymentsComponent', () => {
       const { el, click, settle, toast, tickets } = await setup();
       click('.panel__head .btn--primary');
       await settle();
-      fill(el, { 'pay-ticket': MOCK_SAMPLE_TICKETS[0].toLowerCase(), 'pay-amount': '1200', 'pay-notes': 'Pagó con billete de 500' });
+      fill(el, { 'pay-ticket': MOCK_SAMPLE_TICKETS[0].toLowerCase(), 'pay-amount': '3000' });
       await submit(el, settle);
       expect(el.querySelector('[role=dialog]')).toBeNull();
-      expect(toast.toasts()[0].message).toContain('Pago registrado: $1.200');
+      expect(toast.toasts()[0].message).toContain('Pago registrado: $3.000');
       expect(tickets().length).toBe(6);
-      expect(el.querySelector('.summary')?.textContent).toContain('Total: $9.840');
+      expect(el.querySelector('.summary')?.textContent).toContain('Total: $11.640');
     });
 
     it('muestra el error del backend dentro del formulario (monto distinto o ticket inexistente)', async () => {
@@ -183,7 +185,7 @@ describe('PaymentsComponent', () => {
       for (const attempt of [1, 2]) {
         click('.panel__head .btn--primary');
         await settle();
-        fill(el, { 'pay-ticket': MOCK_SAMPLE_TICKETS[1], 'pay-amount': '2400' });
+        fill(el, { 'pay-ticket': MOCK_SAMPLE_TICKETS[1], 'pay-amount': '1500' });
         await submit(el, settle);
         if (attempt === 2) {
           expect(el.querySelector('[role=alert]')?.textContent).toContain('El ticket ya fue cobrado.');

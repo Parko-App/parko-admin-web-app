@@ -3,9 +3,8 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RegisterPaymentRequest } from '../../../core/models/payment.model';
 import { ModalComponent } from '../../../shared/components/modal/modal.component';
 
-const NOTES_MAX_LENGTH = 200;
 
-/** Registro manual de un pago en efectivo: ticket, monto y observaciones. */
+/** Registro manual de un pago en efectivo: ticket y monto. */
 @Component({
   selector: 'app-payment-form-modal',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -20,27 +19,24 @@ export class PaymentFormModalComponent {
 
   readonly submitted = output<RegisterPaymentRequest>();
   readonly closed = output<void>();
-
-  protected readonly notesMaxLength = NOTES_MAX_LENGTH;
   protected readonly attempted = signal(false);
 
   private readonly fb = inject(FormBuilder);
   protected readonly form = this.fb.group({
     ticketNumber: this.fb.nonNullable.control('', Validators.required),
     amount: this.fb.control<number | null>(null, [Validators.required, Validators.min(0.01)]),
-    notes: this.fb.nonNullable.control('', Validators.maxLength(NOTES_MAX_LENGTH)),
   });
 
   constructor() {
     effect(() => {
       if (this.open()) {
         this.attempted.set(false);
-        this.form.reset({ ticketNumber: '', amount: null, notes: '' });
+        this.form.reset({ ticketNumber: '', amount: null });
       }
     });
   }
 
-  protected showError(name: 'ticketNumber' | 'amount' | 'notes'): boolean {
+  protected showError(name: 'ticketNumber' | 'amount'): boolean {
     return this.attempted() && this.form.controls[name].invalid;
   }
 
@@ -50,12 +46,10 @@ export class PaymentFormModalComponent {
       return;
     }
     const value = this.form.getRawValue();
-    const notes = value.notes.trim();
     this.submitted.emit({
       ticketNumber: value.ticketNumber.trim().toUpperCase(),
       method: 'CASH',
       amount: value.amount!,
-      ...(notes ? { notes } : {}),
     });
   }
 }
