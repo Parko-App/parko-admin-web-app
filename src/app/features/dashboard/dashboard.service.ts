@@ -45,7 +45,6 @@ export class MockDashboardService extends DashboardService {
         paymentsPending: 6,
         openIncidents: 3,
       },
-      alerts: [{ level: 'warning', message: 'Sector B casi lleno (94%)' }],
       occupancyByHour: HOURLY_VEHICLES.map((vehicles, hour) => ({ hour, vehicles })),
     });
   }

@@ -4,12 +4,12 @@
     <button type="button" class="btn btn--primary" (click)="openManual()">Registrar pago</button>
   </div>
   <form class="search" (submit)="$event.preventDefault(); search()" novalidate>
-    <label for="ticket-code" class="sr-only">Número de ticket o código QR</label>
+    <label for="ticket-code" class="sr-only">Número de ticket</label>
     <input
       id="ticket-code"
       type="text"
       [formControl]="codeControl"
-      placeholder="Nro. de ticket (TKT-…) o código QR"
+      placeholder="Nro. de ticket (TKT-…)"
       autocomplete="off"
       spellcheck="false"
     />
@@ -17,10 +17,6 @@
       {{ searching() ? 'Buscando…' : 'Buscar' }}
     </button>
   </form>
-  @if (sampleTickets.length) {
-    <p class="hint">Pruebe: {{ sampleTickets.join(' o ') }}</p>
-  }
-
   @if (searchError(); as message) {
     <p class="result result--error" role="alert">{{ message }}</p>
   }
@@ -65,6 +61,7 @@
             <th scope="col" appSortHeader="amount" [sort]="sort()" (sortChange)="changeSort($event)">Monto</th>
             <th scope="col" appSortHeader="method" [sort]="sort()" (sortChange)="changeSort($event)">Método</th>
             <th scope="col" appSortHeader="cashierName" [sort]="sort()" (sortChange)="changeSort($event)">Cajero</th>
+            <th scope="col">Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -75,6 +72,10 @@
               <td class="amount">{{ payment.amount | currencyAr }}</td>
               <td class="muted">{{ methodLabel(payment.method) }}</td>
               <td class="muted">{{ payment.cashierName }}</td>
+              <td><div class="actions">
+                <button type="button" class="link" [attr.aria-label]="'Ver detalle del ticket ' + payment.ticketNumber" (click)="openDetail(payment)">Ver detalle</button>
+                <button type="button" class="link" [attr.aria-label]="'Generar PDF del ticket ' + payment.ticketNumber" (click)="downloadPdf(payment)">Generar PDF</button>
+              </div></td>
             </tr>
           }
         </tbody>
@@ -105,3 +106,5 @@
   (confirmed)="confirmCharge()"
   (cancelled)="cancelCharge()"
 />
+
+<app-receipt-dialog [open]="detail() !== null" [data]="detailReceipt()" (closed)="detail.set(null)" />

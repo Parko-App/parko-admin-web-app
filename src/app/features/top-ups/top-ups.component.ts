@@ -1,0 +1,77 @@
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { TOP_UP_METHOD_LABELS, TOP_UP_STATUS_LABELS, TopUp, TopUpMethod, TopUpStatus } from '../../core/models/top-up.model';
+import { AsyncStateComponent } from '../../shared/components/async-state/async-state.component';
+import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
+import { ReceiptDialogComponent } from '../../shared/components/receipt-dialog/receipt-dialog.component';
+import { SortHeaderComponent } from '../../shared/components/sort-header/sort-header.component';
+import { BadgeVariant, StatusBadgeComponent } from '../../shared/components/status-badge/status-badge.component';
+import { CurrencyArPipe } from '../../shared/pipes/currency-ar.pipe';
+import { DateTimeArPipe } from '../../shared/pipes/date-time-ar.pipe';
+import { topUpReceipt } from '../../shared/receipt/receipt-builders';
+import { ReceiptService } from '../../shared/receipt/receipt.service';
+import { PagedList } from '../../shared/utils/paged-list';
+import { TopUpsService } from './top-ups.service';
+
+const PAGE_SIZE = 10;
+
+const STATUS_VARIANTS: Record<TopUpStatus, BadgeVariant> = { CREDITED: 'success', PENDING: 'warning', REJECTED: 'orange' };
+
+@Component({
+  selector: 'app-top-ups',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    ReactiveFormsModule,
+    AsyncStateComponent,
+    PaginationComponent,
+    ReceiptDialogComponent,
+    SortHeaderComponent,
+    StatusBadgeComponent,
+    CurrencyArPipe,
+    DateTimeArPipe,
+  ],
+  templateUrl: './top-ups.component.html',
+  styleUrl: './top-ups.component.scss',
+})
+export class TopUpsComponent {
+  private readonly service = inject(TopUpsService);
+  private readonly receipts = inject(ReceiptService);
+
+  protected readonly searchControl = new FormControl('', { nonNullable: true });
+  /** Las cargas más recientes primero, hasta que se elija otra columna. */
+  protected readonly list = new PagedList<TopUp>((query) => this.service.list(query), PAGE_SIZE, {
+    field: 'timestamp',
+    direction: 'desc',
+  });
+
+  protected readonly detail = signal<TopUp | null>(null);
+  protected readonly detailReceipt = computed(() => {
+    const topUp = this.detail();
+    return topUp ? topUpReceipt(topUp) : null;
+  });
+
+  constructor() {
+    this.list.bindSearch(this.searchControl);
+  }
+
+  protected filtering(): boolean {
+    return this.searchControl.value.trim() !== '';
+  }
+
+  protected clearSearch(): void {
+    this.searchControl.setValue('');
+    this.list.search.set('');
+  }
+
+  protected statusLabel(status: TopUpStatus): string { return TOP_UP_STATUS_LABELS[status]; }
+  protected statusVariant(status: TopUpStatus): BadgeVariant { return STATUS_VARIANTS[status]; }
+  protected methodLabel(method: TopUpMethod): string { return TOP_UP_METHOD_LABELS[method]; }
+
+  protected openDetail(topUp: TopUp): void {
+    this.detail.set(topUp);
+  }
+
+  protected downloadPdf(topUp: TopUp): void {
+    void this.receipts.download(topUpReceipt(topUp));
+  }
+}

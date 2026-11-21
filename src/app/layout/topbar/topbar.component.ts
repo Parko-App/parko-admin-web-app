@@ -3,9 +3,7 @@ import { ChangeDetectionStrategy, Component, LOCALE_ID, inject } from '@angular/
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
-import { IconComponent } from '../../shared/components/icon/icon.component';
 import { ARGENTINA_UTC_OFFSET } from '../../shared/utils/argentina-time';
-import { NavBadgesService } from '../nav-badges.service';
 
 function deepestTitle(route: ActivatedRouteSnapshot): string {
   let current = route;
@@ -19,14 +17,12 @@ function deepestTitle(route: ActivatedRouteSnapshot): string {
 @Component({
   selector: 'app-topbar',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [IconComponent],
   templateUrl: './topbar.component.html',
   styleUrl: './topbar.component.scss',
 })
 export class TopbarComponent {
   private readonly router = inject(Router);
   private readonly locale = inject(LOCALE_ID);
-  protected readonly badges = inject(NavBadgesService);
 
   protected readonly title = toSignal(
     this.router.events.pipe(

@@ -1,0 +1,80 @@
+<div class="toolbar">
+  <div class="field field--search">
+    <label for="topup-search" class="sr-only">Buscar por transacción o usuario</label>
+    <input
+      id="topup-search"
+      type="search"
+      [formControl]="searchControl"
+      placeholder="Buscar por transacción o usuario…"
+      autocomplete="off"
+      spellcheck="false"
+    />
+  </div>
+  @if (filtering()) {
+    <button type="button" class="link" (click)="clearSearch()">Limpiar búsqueda</button>
+  }
+</div>
+
+<section class="card list" aria-label="Cargas de saldo">
+  <app-async-state
+    [status]="list.status()"
+    [error]="list.error()"
+    loadingMessage="Cargando cargas de saldo…"
+    [emptyTitle]="filtering() ? 'No se encontraron cargas' : 'Todavía no hay cargas de saldo'"
+    [emptyDescription]="filtering() ? 'Probá con otro número de transacción o usuario.' : ''"
+    (retry)="list.reload()"
+  >
+    <div class="table-scroll">
+      <table class="topups">
+        <caption class="sr-only">Cargas de saldo</caption>
+        <thead>
+          <tr>
+            <th scope="col" appSortHeader="transactionNumber" [sort]="list.sort()" (sortChange)="list.changeSort($event)">Nro. transacción</th>
+            <th scope="col" appSortHeader="userName" [sort]="list.sort()" (sortChange)="list.changeSort($event)">Usuario</th>
+            <th scope="col" appSortHeader="timestamp" [sort]="list.sort()" (sortChange)="list.changeSort($event)">Fecha y hora</th>
+            <th scope="col" appSortHeader="amount" [sort]="list.sort()" (sortChange)="list.changeSort($event)">Monto</th>
+            <th scope="col" appSortHeader="method" [sort]="list.sort()" (sortChange)="list.changeSort($event)">Método</th>
+            <th scope="col" appSortHeader="status" [sort]="list.sort()" (sortChange)="list.changeSort($event)">Estado</th>
+            <th scope="col">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (topUp of list.items(); track topUp.id) {
+            <tr>
+              <td class="mono">{{ topUp.transactionNumber }}</td>
+              <td class="user">{{ topUp.userName }}</td>
+              <td class="muted">{{ topUp.timestamp | dateTimeAr }}</td>
+              <td class="amount">{{ topUp.amount | currencyAr }}</td>
+              <td class="muted">{{ methodLabel(topUp.method) }}</td>
+              <td><app-status-badge [variant]="statusVariant(topUp.status)">{{ statusLabel(topUp.status) }}</app-status-badge></td>
+              <td><div class="actions">
+                <button type="button" class="link" [attr.aria-label]="'Ver detalle de la transacción ' + topUp.transactionNumber" (click)="openDetail(topUp)">Ver detalle</button>
+                @if (topUp.status === 'CREDITED') {
+                  <button type="button" class="link" [attr.aria-label]="'Generar PDF de la transacción ' + topUp.transactionNumber" (click)="downloadPdf(topUp)">Generar PDF</button>
+                }
+              </div></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (list.data(); as page) {
+      @if (page.totalPages > 1) {
+        <app-pagination
+          [page]="page.page"
+          [size]="page.size"
+          [totalElements]="page.totalElements"
+          [totalPages]="page.totalPages"
+          (pageChange)="list.goToPage($event)"
+        />
+      }
+    }
+  </app-async-state>
+</section>
+
+<app-receipt-dialog
+  [open]="detail() !== null"
+  [data]="detailReceipt()"
+  [pdfEnabled]="detail()?.status === 'CREDITED'"
+  (closed)="detail.set(null)"
+/>

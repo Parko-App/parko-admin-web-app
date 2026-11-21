@@ -21,20 +21,6 @@
   dd { margin: 0; font-weight: 600; color: var(--color-text); }
 }
 
-.alert {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 16px 0 0;
-  padding: 10px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-
-  &--info { background: #e3eefe; color: #1d4ed8; }
-  &--warning { background: #fef6dd; color: #854d0e; }
-  &--danger { background: #fde8e8; color: #991b1b; }
-}
-
 .access {
   width: 100%;
   border-collapse: collapse;

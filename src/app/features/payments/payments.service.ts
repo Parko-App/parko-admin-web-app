@@ -102,9 +102,6 @@ export class MockPaymentsService extends PaymentsService {
     if (request.amount !== ticket.amountDue) {
       return httpError(400, `El monto ingresado no coincide con el total a cobrar ($${ticket.amountDue}).`);
     }
-    if (request.receivedAmount !== undefined && request.receivedAmount < request.amount) {
-      return httpError(400, 'El efectivo recibido no alcanza para cubrir el monto a pagar.');
-    }
     ticket.status = 'PAID';
     const record: PaymentRecord = {
       id: `pay-${this.payments.length + 1}-${ticket.ticketNumber}`,

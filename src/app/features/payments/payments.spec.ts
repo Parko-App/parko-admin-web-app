@@ -140,7 +140,7 @@ describe('PaymentsComponent', () => {
       expect(dialog.textContent).toContain('Registrar pago');
       expect(dialog.querySelector('#pay-ticket')).not.toBeNull();
       expect(dialog.querySelector('#pay-amount')).not.toBeNull();
-      expect(dialog.querySelector('#pay-received')).not.toBeNull();
+      expect(dialog.querySelector('#pay-received')).toBeNull();
       expect(dialog.querySelector('#pay-notes')).not.toBeNull();
     });
 
@@ -153,28 +153,14 @@ describe('PaymentsComponent', () => {
       expect(el.textContent).toContain('Ingresá un monto mayor a cero.');
     });
 
-    it('calcula el vuelto y exige que el efectivo recibido alcance', async () => {
-      const { el, click, settle } = await setup();
-      click('.panel__head .btn--primary');
-      await settle();
-      fill(el, { 'pay-ticket': MOCK_SAMPLE_TICKETS[0], 'pay-amount': '1200', 'pay-received': '1500' });
-      await settle();
-      expect(el.querySelector('.change')?.textContent).toContain('$300');
-      fill(el, { 'pay-received': '1000' });
-      await submit(el, settle);
-      expect(el.textContent).toContain('no alcanza para cubrir el monto');
-      expect(el.querySelector('[role=dialog]')).not.toBeNull();
-    });
-
-    it('registra el pago, informa el vuelto y actualiza la tabla', async () => {
+    it('registra el pago y actualiza la tabla', async () => {
       const { el, click, settle, toast, tickets } = await setup();
       click('.panel__head .btn--primary');
       await settle();
-      fill(el, { 'pay-ticket': MOCK_SAMPLE_TICKETS[0].toLowerCase(), 'pay-amount': '1200', 'pay-received': '1500', 'pay-notes': 'Pagó con billete de 500' });
+      fill(el, { 'pay-ticket': MOCK_SAMPLE_TICKETS[0].toLowerCase(), 'pay-amount': '1200', 'pay-notes': 'Pagó con billete de 500' });
       await submit(el, settle);
       expect(el.querySelector('[role=dialog]')).toBeNull();
       expect(toast.toasts()[0].message).toContain('Pago registrado: $1.200');
-      expect(toast.toasts()[0].message).toContain('Vuelto: $300');
       expect(tickets().length).toBe(6);
       expect(el.querySelector('.summary')?.textContent).toContain('Total: $9.840');
     });
@@ -204,5 +190,16 @@ describe('PaymentsComponent', () => {
         }
       }
     });
+  });
+
+  it('cada cobro tiene "Ver detalle" (comprobante en rojo) y "Generar PDF"', async () => {
+    const { el, settle } = await setup();
+    const row = el.querySelector('.payments tbody tr') as HTMLElement;
+    const buttons = Array.from(row.querySelectorAll('button')).map((b) => b.textContent?.trim());
+    expect(buttons).toEqual(['Ver detalle', 'Generar PDF']);
+    (row.querySelector('button') as HTMLButtonElement).click();
+    await settle();
+    expect(el.querySelector('.receipt__title')?.textContent).toContain('Pago realizado');
+    expect(el.querySelector('.receipt__amount--debit')?.textContent?.trim()).toBe('- $2.560');
   });
 });

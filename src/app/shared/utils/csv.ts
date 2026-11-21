@@ -16,9 +16,9 @@ export function toCsv(headers: string[], rows: CsvCell[][]): string {
   return '﻿' + lines.join('\r\n') + '\r\n';
 }
 
-/** Descarga un archivo de texto generado en el navegador. */
-export function downloadTextFile(filename: string, content: string, mime = 'text/csv;charset=utf-8'): void {
-  const url = URL.createObjectURL(new Blob([content], { type: mime }));
+/** Descarga un archivo generado en el navegador (CSV, PDF, etc.). */
+export function downloadBlob(filename: string, blob: Blob): void {
+  const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
   link.download = filename;
@@ -26,4 +26,9 @@ export function downloadTextFile(filename: string, content: string, mime = 'text
   link.click();
   link.remove();
   setTimeout(() => URL.revokeObjectURL(url));
+}
+
+/** Descarga un archivo de texto generado en el navegador. */
+export function downloadTextFile(filename: string, content: string, mime = 'text/csv;charset=utf-8'): void {
+  downloadBlob(filename, new Blob([content], { type: mime }));
 }

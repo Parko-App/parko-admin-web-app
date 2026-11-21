@@ -1,4 +1,4 @@
-<form class="card filters no-print" [formGroup]="form" (submit)="$event.preventDefault(); generate()" novalidate>
+<form class="card filters" [formGroup]="form" (submit)="$event.preventDefault(); generate()" novalidate>
   <div class="field">
     <label for="report-type">Tipo de reporte</label>
     <select id="report-type" formControlName="type">
@@ -22,7 +22,7 @@
       <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2v8m0 0L5 7m3 3 3-3M3 13h10" /></svg>
       Exportar CSV
     </button>
-    <button type="button" class="btn" [disabled]="!canExport()" (click)="exportPdf()">
+    <button type="button" class="btn" [disabled]="!canExport() || exportingPdf()" (click)="exportPdf()">
       <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2v8m0 0L5 7m3 3 3-3M3 13h10" /></svg>
       Exportar PDF
     </button>

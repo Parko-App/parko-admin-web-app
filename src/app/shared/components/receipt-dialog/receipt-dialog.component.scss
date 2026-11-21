@@ -1,0 +1,43 @@
+.receipt {
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+
+  &__head { display: flex; align-items: center; justify-content: space-between; padding-bottom: 14px; border-bottom: 1px solid var(--color-border); }
+  &__brand { font-size: 26px; font-weight: 800; letter-spacing: 0.02em; color: var(--color-primary); }
+  &__badge { padding: 7px 12px; border-radius: 8px; background: var(--color-success); color: #fff; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; }
+
+  &__section { padding: 16px 0 6px; border-bottom: 1px solid var(--color-border); }
+  &__title { margin: 0; font-size: 17px; font-weight: 700; color: var(--color-text); }
+  &__subtitle { margin: 2px 0 14px; font-size: 13px; color: var(--color-muted); }
+
+  &__rows { margin: 0; padding-bottom: 8px; }
+  &__rows div { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: 13px; }
+  &__rows dt { color: var(--color-muted); }
+  &__rows dd { margin: 0; font-weight: 700; color: var(--color-text); text-align: right; word-break: break-word; }
+
+  &__total { display: flex; align-items: center; justify-content: space-between; padding: 14px 0 6px; font-weight: 700; color: var(--color-text); }
+  &__amount { font-size: 22px; }
+  &__amount--credit { color: var(--color-success); }
+  &__amount--debit { color: var(--color-danger); }
+  &__amount--neutral { color: var(--color-text); }
+
+  &__qr { display: block; width: 130px; height: 130px; margin: 10px auto 6px; background: #fff; }
+  &__foot { margin: 0; text-align: center; font-size: 11px; color: var(--color-muted); }
+}
+
+.btn {
+  padding: 8px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover:not(:disabled) { background: var(--color-background); }
+  &--primary { border-color: var(--color-primary); background: var(--color-primary); color: #fff; }
+  &--primary:hover:not(:disabled) { background: var(--color-primary-dark); }
+  &:disabled { opacity: 0.55; cursor: not-allowed; }
+}

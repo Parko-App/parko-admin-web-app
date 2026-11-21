@@ -244,21 +244,40 @@ describe('ReportsComponent', () => {
     expect(TestBed.inject(ToastService).toasts()[0].message).toBe('Se descargó el reporte en CSV.');
   });
 
-  it('exporta a PDF abriendo el diálogo de impresión con el título del reporte', async () => {
-    const { generate, click } = await setup();
-    await generate('ACCESS');
-    let titleWhilePrinting = '';
-    const original = window.print;
-    window.print = () => {
-      titleWhilePrinting = document.title;
-    };
-    try {
-      click('.filters__export .btn:last-child');
-    } finally {
-      window.print = original;
+  it('exporta a PDF descargándolo directo, sin abrir el diálogo de impresión', async () => {
+    const { generate, click, settle } = await setup();
+    for (const type of ['OCCUPANCY', 'REVENUE', 'ACCESS'] as const) {
+      await generate(type);
+      let downloaded = '';
+      let blob: Blob | undefined;
+      const create = URL.createObjectURL;
+      URL.createObjectURL = (b: Blob | MediaSource) => {
+        blob = b as Blob;
+        return 'blob:pdf';
+      };
+      const anchorClick = HTMLAnchorElement.prototype.click;
+      HTMLAnchorElement.prototype.click = function (this: HTMLAnchorElement) {
+        downloaded = this.download;
+      };
+      const printSpy = vi.spyOn(window, 'print').mockImplementation(() => undefined);
+      try {
+        click('.filters__export .btn:last-child');
+        await settle(400);
+      } finally {
+        URL.createObjectURL = create;
+        HTMLAnchorElement.prototype.click = anchorClick;
+      }
+      expect(printSpy).not.toHaveBeenCalled();
+      printSpy.mockRestore();
+      expect(downloaded).toMatch(/^reporte-.*\.pdf$/);
+      const text = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.readAsText(blob!.slice(0, 8));
+      });
+      expect(text.startsWith('%PDF')).toBe(true);
     }
-    expect(titleWhilePrinting).toBe('Parko - Accesos 23/09/2026 - 29/09/2026');
-    expect(document.title).not.toContain('Accesos');
+    expect(TestBed.inject(ToastService).toasts().some((t) => t.message === 'Se descargó el reporte en PDF.')).toBe(true);
   });
 
   it('sin datos muestra el estado vacío y no permite exportar', async () => {
