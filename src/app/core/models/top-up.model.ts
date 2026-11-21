@@ -1,6 +1,7 @@
 /**
- * Contrato SUPUESTO de la pantalla de Carga de saldos (pendiente de confirmar con backend):
- *   GET admin/top-ups?search=&page=&size=&sort=  -> PageResponse<TopUp>
+ * Carga de saldos (admin-service, TopUpController):
+ *   GET  admin/top-ups?search=&page=&size=&sort=  -> PageResponse<TopUp>
+ *   POST admin/top-ups { userId, amount }         -> TopUp (acredita el saldo y registra la carga en efectivo)
  * `search` filtra por número de transacción o por usuario (nombre o correo).
  */
 export type TopUpStatus = 'CREDITED' | 'PENDING' | 'REJECTED';
@@ -29,3 +30,19 @@ export const TOP_UP_METHOD_LABELS: Record<TopUpMethod, string> = {
   MERCADO_PAGO: 'Mercado Pago',
   CASH: 'Efectivo',
 };
+
+/** Usuario al que se le puede cargar saldo (resultado de la búsqueda del diálogo). */
+export interface TopUpUser {
+  id: string;
+  fullName: string;
+  email: string;
+}
+
+/** Carga manual de saldo hecha por un administrador. */
+export interface TopUpRequest {
+  userId: string;
+  amount: number;
+}
+
+/** Tope de una carga manual; el backend lo valida con el mismo valor (TOPUP_MAX_AMOUNT). */
+export const TOP_UP_MAX_AMOUNT = 100000;

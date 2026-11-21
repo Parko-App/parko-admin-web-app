@@ -72,4 +72,93 @@ describe('TopUpsComponent', () => {
     const first = el.querySelector('.topups tbody tr .amount')?.textContent?.trim();
     expect(first).toBe('$900');
   });
+
+  describe('cargar saldo', () => {
+    const type = async (el: HTMLElement, selector: string, value: string, settle: (ms?: number) => Promise<void>, ms = 10) => {
+      const input = el.querySelector(selector) as HTMLInputElement;
+      input.value = value;
+      input.dispatchEvent(new Event('input'));
+      await settle(ms);
+    };
+    const open = async (el: HTMLElement, settle: (ms?: number) => Promise<void>) => {
+      (el.querySelector('button.toolbar__action') as HTMLButtonElement).click();
+      await settle();
+    };
+    const submit = async (el: HTMLElement, settle: (ms?: number) => Promise<void>) => {
+      (el.querySelector('button[form="top-up-form"]') as HTMLButtonElement).click();
+      await settle();
+    };
+
+    it('el botón abre el diálogo', async () => {
+      const { el, settle } = await setup();
+      expect(el.querySelector('#top-up-form')).toBeNull();
+
+      await open(el, settle);
+
+      expect(el.querySelector('#top-up-form')).not.toBeNull();
+      expect(el.textContent).toContain('Cargar saldo');
+    });
+
+    it('no envía sin usuario ni monto y marca los errores', async () => {
+      const { el, settle } = await setup();
+      await open(el, settle);
+
+      await submit(el, settle);
+
+      expect(el.querySelector('#top-up-form')).not.toBeNull();
+      expect(el.textContent).toContain('Elegí el usuario');
+      expect(el.textContent).toContain('Ingresá el monto');
+    });
+
+    it('rechaza montos con más de 2 decimales o fuera de rango', async () => {
+      const { el, settle } = await setup();
+      await open(el, settle);
+
+      await type(el, '#top-up-amount', '10.555', settle);
+      await submit(el, settle);
+      expect(el.textContent).toContain('más de 2 decimales');
+
+      await type(el, '#top-up-amount', '999999', settle);
+      await submit(el, settle);
+      expect(el.textContent).toContain('no puede superar');
+
+      await type(el, '#top-up-amount', '0', settle);
+      await submit(el, settle);
+      expect(el.textContent).toContain('mayor a cero');
+    });
+
+    it('busca un usuario, lo elige, carga el monto y la carga aparece primera en la lista', async () => {
+      const { el, settle } = await setup();
+      await open(el, settle);
+
+      await type(el, '#top-up-user', 'lucas', settle, 350);
+      const options = el.querySelectorAll('.results button');
+      expect(options.length).toBe(1);
+      expect(options[0].textContent).toContain('Lucas Fernández');
+
+      (options[0] as HTMLButtonElement).click();
+      await settle();
+      expect(el.querySelector('.chosen')?.textContent).toContain('lucas.fernandez@frc.utn.edu.ar');
+
+      await type(el, '#top-up-amount', '1500', settle);
+      await submit(el, settle);
+
+      expect(el.querySelector('#top-up-form')).toBeNull(); // el diálogo se cerró
+      const firstRow = el.querySelector('.topups tbody tr') as HTMLElement;
+      expect(firstRow.textContent).toContain('Lucas Fernández');
+      expect(firstRow.textContent).toContain('$1.500');
+      expect(firstRow.textContent).toContain('Efectivo');
+      expect(firstRow.textContent).toContain('Acreditada');
+    });
+
+    it('avisa cuando no hay usuarios que coincidan', async () => {
+      const { el, settle } = await setup();
+      await open(el, settle);
+
+      await type(el, '#top-up-user', 'zzzz', settle, 350);
+
+      expect(el.querySelectorAll('.results button').length).toBe(0);
+      expect(el.textContent).toContain('No se encontraron usuarios');
+    });
+  });
 });

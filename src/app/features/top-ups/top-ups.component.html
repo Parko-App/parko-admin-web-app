@@ -13,6 +13,7 @@
   @if (filtering()) {
     <button type="button" class="link" (click)="clearSearch()">Limpiar búsqueda</button>
   }
+  <button type="button" class="btn btn--primary toolbar__action" (click)="openForm()">Cargar saldo</button>
 </div>
 
 <section class="card list" aria-label="Cargas de saldo">
@@ -71,6 +72,14 @@
     }
   </app-async-state>
 </section>
+
+<app-top-up-form-modal
+  [open]="formOpen()"
+  [saving]="saving()"
+  [error]="formError()"
+  (saved)="save($event)"
+  (closed)="closeForm()"
+/>
 
 <app-receipt-dialog
   [open]="detail() !== null"

@@ -24,7 +24,7 @@ export class HttpAccessService extends AccessService {
   private readonly api = inject(ApiClient);
 
   list(query: ListQuery): Observable<PageResponse<AccessRecord>> {
-    return this.api.get<PageResponse<AccessRecord>>('admin/access-events', {
+    return this.api.get<PageResponse<AccessRecord>>('admin/accesos', {
       search: normalizePlate(query.search),
       movement: query.filters?.['movement'] || undefined,
       page: query.page,

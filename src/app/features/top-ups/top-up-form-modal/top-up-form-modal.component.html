@@ -1,0 +1,94 @@
+<app-modal [open]="open()" title="Cargar saldo" (closed)="closed.emit()">
+  <form id="top-up-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    @if (error(); as message) {
+      <div class="form-error" role="alert">{{ message }}</div>
+    }
+
+    <div class="field">
+      @if (selected(); as user) {
+        <span class="field__label" id="top-up-user-label">Usuario</span>
+        <div class="chosen" aria-labelledby="top-up-user-label">
+          <div>
+            <strong>{{ user.fullName }}</strong>
+            <span class="chosen__email">{{ user.email }}</span>
+          </div>
+          <button type="button" class="link" (click)="clearSelection()">Cambiar</button>
+        </div>
+      } @else {
+        <label for="top-up-user">Usuario</label>
+        <input
+          id="top-up-user"
+          type="search"
+          formControlName="search"
+          placeholder="Buscar por nombre o correo…"
+          autocomplete="off"
+          spellcheck="false"
+          [attr.aria-invalid]="submitted()"
+        />
+        @if (searching()) {
+          <p class="field__hint">Buscando…</p>
+        }
+        @if (results().length > 0) {
+          <ul class="results" role="listbox" aria-label="Usuarios encontrados">
+            @for (user of results(); track user.id) {
+              <li role="option" aria-selected="false">
+                <button type="button" (click)="pick(user)">
+                  <strong>{{ user.fullName }}</strong>
+                  <span>{{ user.email }}</span>
+                </button>
+              </li>
+            }
+          </ul>
+        }
+        @if (showNoResults) {
+          <p class="field__hint">No se encontraron usuarios activos con ese dato.</p>
+        }
+        @if (searchFailed()) {
+          <p class="field__error">No se pudo buscar usuarios. Intentá nuevamente.</p>
+        }
+        @if (submitted()) {
+          <p class="field__error">Elegí el usuario al que querés cargarle saldo.</p>
+        }
+      }
+    </div>
+
+    <div class="field field--amount">
+      <label for="top-up-amount">Monto a cargar ($)</label>
+      <input
+        id="top-up-amount"
+        type="number"
+        inputmode="decimal"
+        formControlName="amount"
+        min="0.01"
+        [max]="maxAmount"
+        step="0.01"
+        autocomplete="off"
+        [attr.aria-invalid]="submitted() && form.controls.amount.invalid"
+        aria-describedby="top-up-amount-hint"
+      />
+      <p class="field__hint" id="top-up-amount-hint">Hasta {{ maxAmount }} pesos, con un máximo de 2 decimales.</p>
+      @if (submitted() && form.controls.amount.invalid) {
+        <p class="field__error">
+          @if (form.controls.amount.hasError('required')) {
+            Ingresá el monto.
+          } @else if (form.controls.amount.hasError('decimals')) {
+            El monto no puede tener más de 2 decimales.
+          } @else if (form.controls.amount.hasError('max')) {
+            El monto no puede superar {{ maxAmount }} pesos.
+          } @else {
+            El monto tiene que ser mayor a cero.
+          }
+        </p>
+      }
+    </div>
+
+    <p class="note">La carga se acredita al instante en el saldo del usuario y queda registrada como efectivo.</p>
+  </form>
+
+  <ng-container modalFooter>
+    <button type="button" class="btn" (click)="closed.emit()">Cancelar</button>
+    <button type="submit" form="top-up-form" class="btn btn--primary" [disabled]="saving()">
+      {{ saving() ? 'Cargando…' : 'Cargar saldo' }}
+    </button>
+  </ng-container>
+</app-modal>

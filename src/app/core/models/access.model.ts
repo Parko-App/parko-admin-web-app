@@ -1,8 +1,8 @@
 import { AccessMovement, AccessUserType, RecentAccess } from './dashboard.model';
 
 /**
- * Contrato SUPUESTO de la pantalla de Accesos (pendiente de confirmar con backend):
- *   GET admin/access-events?search=&movement=&page=&size=&sort=  -> PageResponse<AccessRecord>
+ * Contrato de la pantalla de Accesos (admin-service, AccessController):
+ *   GET admin/accesos?search=&movement=&page=&size=&sort=  -> PageResponse<AccessRecord>
  * `search` filtra por patente (parcial); `movement` es ENTRY o EXIT (vacío = todos).
  */
 

@@ -1,14 +1,34 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable, map, of } from 'rxjs';
 import { USE_MOCKS } from '../../core/config/tokens';
 import { PageResponse } from '../../core/models/page-response.model';
-import { TOP_UP_METHOD_LABELS, TOP_UP_STATUS_LABELS, TopUp, TopUpMethod, TopUpStatus } from '../../core/models/top-up.model';
+import {
+  TOP_UP_METHOD_LABELS,
+  TOP_UP_STATUS_LABELS,
+  TopUp,
+  TopUpMethod,
+  TopUpRequest,
+  TopUpStatus,
+  TopUpUser,
+} from '../../core/models/top-up.model';
 import { ApiClient } from '../../core/services/api-client.service';
 import { ListQuery } from '../../shared/utils/paged-list';
 import { sortRows, toSortParam } from '../../shared/utils/sort';
 
 export abstract class TopUpsService {
   abstract list(query: ListQuery): Observable<PageResponse<TopUp>>;
+  /** Usuarios activos que coinciden con el texto (nombre, correo o legajo), para elegir a quién cargarle saldo. */
+  abstract searchUsers(term: string): Observable<TopUpUser[]>;
+  /** Acredita saldo a un usuario. Devuelve la carga registrada. */
+  abstract create(request: TopUpRequest): Observable<TopUp>;
+}
+
+/** Respuesta resumida de GET admin/users (solo lo que usa el diálogo). */
+interface UserSummaryDto {
+  id: string;
+  fullName: string;
+  email: string;
+  active: boolean;
 }
 
 @Injectable()
@@ -22,6 +42,20 @@ export class HttpTopUpsService extends TopUpsService {
       size: query.size,
       sort: toSortParam(query.sort),
     });
+  }
+
+  searchUsers(term: string): Observable<TopUpUser[]> {
+    return this.api
+      .get<PageResponse<UserSummaryDto>>('admin/users', { q: term.trim(), page: 0 })
+      .pipe(
+        map((page) =>
+          page.content.filter((user) => user.active).map(({ id, fullName, email }) => ({ id, fullName, email })),
+        ),
+      );
+  }
+
+  create(request: TopUpRequest): Observable<TopUp> {
+    return this.api.post<TopUp>('admin/top-ups', request);
   }
 }
 
@@ -67,9 +101,41 @@ function emailOf(name: string): string {
   return `${slug}@frc.utn.edu.ar`;
 }
 
+const MOCK_USERS: TopUpUser[] = [...new Set(SEEDS.map((seed) => seed[2]))].map((name, index) => ({
+  id: `U-${String(index + 1).padStart(4, '0')}`,
+  fullName: name,
+  email: emailOf(name),
+}));
+
 /** Datos de demostración (solo con useMocks: true). */
 @Injectable()
 export class MockTopUpsService extends TopUpsService {
+  /** Cargas hechas desde el diálogo durante la sesión de demostración. */
+  private readonly created: TopUp[] = [];
+
+  searchUsers(term: string): Observable<TopUpUser[]> {
+    const needle = term.trim().toLowerCase();
+    return of(
+      MOCK_USERS.filter((u) => u.fullName.toLowerCase().includes(needle) || u.email.toLowerCase().includes(needle)),
+    );
+  }
+
+  create(request: TopUpRequest): Observable<TopUp> {
+    const user = MOCK_USERS.find((u) => u.id === request.userId);
+    const topUp: TopUp = {
+      id: `TU-NEW-${this.created.length + 1}`,
+      transactionNumber: `TX-${Math.random().toString(16).slice(2, 8).toUpperCase()}`,
+      userName: user?.fullName ?? 'Usuario',
+      userEmail: user?.email ?? '',
+      timestamp: new Date().toISOString(),
+      amount: request.amount,
+      method: 'CASH',
+      status: 'CREDITED',
+    };
+    this.created.unshift(topUp);
+    return of(topUp);
+  }
+
   list(query: ListQuery): Observable<PageResponse<TopUp>> {
     const now = Date.now();
     const all: TopUp[] = SEEDS.map(([minutesAgo, transactionNumber, userName, amount, method, status], index) => ({
@@ -82,6 +148,7 @@ export class MockTopUpsService extends TopUpsService {
       method,
       status,
     }));
+    all.unshift(...this.created);
 
     const term = query.search.trim().toLowerCase();
     const filtered = all.filter(
