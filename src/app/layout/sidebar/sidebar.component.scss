@@ -19,9 +19,15 @@
     width: 36px;
     height: 36px;
     border-radius: 8px;
-    background: var(--color-primary);
-    font-weight: 700;
-    font-size: 18px;
+    /* el logo de Parko (el mismo de la app móvil) va sobre fondo blanco para que se lea sobre el menú oscuro */
+    background: #fff;
+
+    img {
+      display: block;
+      width: 26px;
+      height: 26px;
+      object-fit: contain;
+    }
   }
 
   &__name {

@@ -33,6 +33,18 @@ describe('Layout administrativo', () => {
     expect(el.textContent).toContain('Cerrar sesión');
   });
 
+  it('el encabezado del sidebar usa el logo de Parko, no una letra', async () => {
+    const fixture = TestBed.createComponent(SidebarComponent);
+    await fixture.whenStable();
+    const el: HTMLElement = fixture.nativeElement;
+
+    const logo = el.querySelector('.sidebar__brand .sidebar__logo img') as HTMLImageElement;
+    expect(logo).not.toBeNull();
+    expect(logo.getAttribute('src')).toBe('logo.png');
+    expect(el.querySelector('.sidebar__name')?.textContent?.trim()).toBe('PARKO');
+    expect(el.querySelector('.sidebar__logo')?.textContent?.trim()).toBe('');
+  });
+
   it('resalta la opción activa', async () => {
     const router = TestBed.inject(Router);
     await router.navigateByUrl('/admin/pagos');
