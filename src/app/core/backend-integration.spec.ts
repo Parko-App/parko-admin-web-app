@@ -7,7 +7,6 @@ import { HttpReportsService } from '../features/reports/reports.service';
 import { HttpUsersService } from '../features/users/users.service';
 import { HttpVehiclesService } from '../features/vehicles/vehicles.service';
 import { fromServerDateTime } from '../shared/utils/server-dates';
-import { todayInArgentina } from '../shared/utils/dates';
 
 const API = '/api/v1';
 
@@ -180,27 +179,48 @@ describe('integración: pagos', () => {
     http.expectNone(`${API}/admin/tickets/t1/pay`);
   });
 
-  it('arma "cobros de hoy" con todas las páginas de tickets pagados', async () => {
+  it('lista todos los tickets con su estado, método de pago y cajero', async () => {
     const http = setup();
-    const result = firstValueFrom(TestBed.runInInjectionContext(() => new HttpPaymentsService()).listToday({ field: 'amount', direction: 'desc' }));
-    const today = todayInArgentina();
-    const first = http.expectOne((r) => r.url === `${API}/admin/tickets` && r.params.get('page') === '0');
-    expect(first.request.params.get('from')).toBe(today);
-    expect(first.request.params.get('to')).toBe(today);
-    expect(first.request.params.get('status')).toBe('PAID');
-    const row = (n: number, amount: number) => ({
-      id: `t${n}`, ticketNumber: `TKT-${n}`, status: 'PAID', issuedAt: '2026-11-21T08:00:00', paidAt: '2026-11-21T09:00:00',
-      sessionType: 'VISITOR', plate: null, amount,
+    const result = firstValueFrom(
+      TestBed.runInInjectionContext(() => new HttpPaymentsService()).listTickets({
+        search: '',
+        page: 1,
+        size: 20,
+        sort: { field: 'status', direction: 'asc' },
+      }),
+    );
+    const req = http.expectOne((r) => r.url === `${API}/admin/tickets`);
+    expect(req.request.params.get('page')).toBe('1');
+    expect(req.request.params.get('sort')).toBe('status,asc');
+    // sin filtros de fecha ni de estado: trae todos los tickets
+    expect(req.request.params.has('from')).toBe(false);
+    expect(req.request.params.has('status')).toBe(false);
+    const row = (n: number, status: string, extra: object = {}) => ({
+      id: `t${n}`, ticketNumber: `TKT-${n}`, status, issuedAt: '2026-11-21T08:00:00', paidAt: null,
+      sessionType: 'VISITOR', plate: null, amount: 3000, paymentMethod: null, cashierName: null, ...extra,
     });
-    first.flush({ content: [row(1, 1500)], page: 0, size: 20, totalElements: 2, totalPages: 2 });
-    await flush();
-    http.expectOne((r) => r.url === `${API}/admin/tickets` && r.params.get('page') === '1').flush({
-      content: [row(2, 3000)], page: 1, size: 20, totalElements: 2, totalPages: 2,
+    req.flush({
+      content: [
+        row(1, 'PENDING_PAYMENT'),
+        row(2, 'PAID', { paidAt: '2026-11-21T09:00:00', paymentMethod: 'CASH', cashierName: 'Facundo Morales' }),
+        row(3, 'PAID', { paidAt: '2026-11-21T09:10:00', paymentMethod: 'MERCADO_PAGO' }),
+        row(4, 'USED', { paidAt: '2026-11-21T09:20:00', paymentMethod: 'BALANCE', amount: 1500 }),
+        row(5, 'CANCELLED', { amount: null }),
+      ],
+      page: 1, size: 20, totalElements: 25, totalPages: 2,
     });
-    const today$ = await result;
-    expect(today$.count).toBe(2);
-    expect(today$.totalAmount).toBe(4500);
-    expect(today$.items.map((item) => item.amount)).toEqual([3000, 1500]);
+    const page = await result;
+    expect(page).toMatchObject({ page: 1, totalElements: 25, totalPages: 2 });
+    expect(page.content.map((r) => [r.status, r.method, r.cashierName])).toEqual([
+      ['PENDING', null, null],
+      ['PAID', 'CASH', 'Facundo Morales'],
+      ['PAID', 'MERCADO_PAGO', null],
+      ['USED', 'BALANCE', null],
+      ['CANCELLED', null, null],
+    ]);
+    expect(page.content[0]).toMatchObject({ issuedAt: '2026-11-21T08:00:00-03:00', paidAt: null, amount: 3000 });
+    expect(page.content[1].paidAt).toBe('2026-11-21T09:00:00-03:00');
+    expect(page.content[4].amount).toBeNull();
   });
 });
 

@@ -9,28 +9,31 @@ import {
   RegisterPaymentRequest,
   TICKET_SESSION_TYPE_LABELS,
   TICKET_STATUS_LABELS,
+  TicketRow,
   TicketSessionType,
   TicketStatus,
-  TodayPayments,
   VisitorTicket,
 } from '../../core/models/payment.model';
-import { SortState } from '../../core/models/sort.model';
 import { ToastService } from '../../core/notifications/toast.service';
 import { AsyncStateComponent } from '../../shared/components/async-state/async-state.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
+import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 import { SortHeaderComponent } from '../../shared/components/sort-header/sort-header.component';
 import { BadgeVariant, StatusBadgeComponent } from '../../shared/components/status-badge/status-badge.component';
 import { CurrencyArPipe } from '../../shared/pipes/currency-ar.pipe';
 import { PlatePipe } from '../../shared/pipes/plate.pipe';
 import { DateTimeArPipe } from '../../shared/pipes/date-time-ar.pipe';
-import { AsyncStatus } from '../../shared/utils/async-state';
+import { PagedList } from '../../shared/utils/paged-list';
 import { ReceiptDialogComponent } from '../../shared/components/receipt-dialog/receipt-dialog.component';
 import { paymentReceipt } from '../../shared/receipt/receipt-builders';
 import { ReceiptService } from '../../shared/receipt/receipt.service';
 import { PaymentFormModalComponent } from './payment-form-modal/payment-form-modal.component';
 import { PaymentsService } from './payments.service';
 
-const TICKET_VARIANTS: Record<TicketStatus, BadgeVariant> = { PENDING: 'warning', PAID: 'success', USED: 'neutral', CANCELLED: 'neutral' };
+const PAGE_SIZE = 20;
+
+/** Pendiente: amarillo · Cobrado: verde · Utilizado: azul · Cancelado: rojo. */
+const TICKET_VARIANTS: Record<TicketStatus, BadgeVariant> = { PENDING: 'warning', PAID: 'success', USED: 'info', CANCELLED: 'danger' };
 
 @Component({
   selector: 'app-payments',
@@ -40,6 +43,7 @@ const TICKET_VARIANTS: Record<TicketStatus, BadgeVariant> = { PENDING: 'warning'
     PlatePipe,
     AsyncStateComponent,
     ConfirmDialogComponent,
+    PaginationComponent,
     SortHeaderComponent,
     StatusBadgeComponent,
     CurrencyArPipe,
@@ -63,21 +67,21 @@ export class PaymentsComponent {
   protected readonly confirming = signal(false);
   protected readonly charging = signal(false);
 
-  protected readonly detail = signal<PaymentRecord | null>(null);
+  protected readonly detail = signal<TicketRow | null>(null);
   protected readonly detailReceipt = computed(() => {
-    const payment = this.detail();
-    return payment ? paymentReceipt(payment) : null;
+    const row = this.detail();
+    return row ? paymentReceipt(toPaymentRecord(row)) : null;
   });
 
   protected readonly manualOpen = signal(false);
   protected readonly manualSaving = signal(false);
   protected readonly manualError = signal<string | null>(null);
 
-  protected readonly status = signal<AsyncStatus>('loading');
-  protected readonly error = signal<string | null>(null);
-  protected readonly today = signal<TodayPayments | null>(null);
-  protected readonly sort = signal<SortState | null>(null);
-  private loadSequence = 0;
+  /** Todos los tickets, los más recientes primero hasta que se elija otra columna. */
+  protected readonly list = new PagedList<TicketRow>((query) => this.service.listTickets(query), PAGE_SIZE, {
+    field: 'issuedAt',
+    direction: 'desc',
+  });
 
   protected readonly confirmMessage = computed(() => {
     const ticket = this.ticket();
@@ -85,10 +89,6 @@ export class PaymentsComponent {
       ? `¿Confirmás el cobro de ${this.currency.transform(ticket.amountDue)} en efectivo del ticket ${ticket.ticketNumber}?`
       : '';
   });
-
-  constructor() {
-    void this.loadToday();
-  }
 
   protected statusLabel(status: TicketStatus): string { return TICKET_STATUS_LABELS[status]; }
   protected statusVariant(status: TicketStatus): BadgeVariant { return TICKET_VARIANTS[status]; }
@@ -137,7 +137,7 @@ export class PaymentsComponent {
       this.confirming.set(false);
       this.toast.success(`Cobro registrado: ${this.currency.transform(record.amount)} (${record.ticketNumber}).`);
       this.ticket.set({ ...ticket, status: 'PAID' });
-      void this.loadToday();
+      this.list.reload();
     } catch (error) {
       this.confirming.set(false);
       this.toast.error(toErrorMessage(error));
@@ -170,7 +170,7 @@ export class PaymentsComponent {
       if (open?.ticketNumber === record.ticketNumber) {
         this.ticket.set({ ...open, status: 'PAID' });
       }
-      void this.loadToday();
+      this.list.reload();
     } catch (error) {
       this.manualError.set(toErrorMessage(error));
     } finally {
@@ -178,45 +178,27 @@ export class PaymentsComponent {
     }
   }
 
-  protected openDetail(payment: PaymentRecord): void {
-    this.detail.set(payment);
+  protected openDetail(row: TicketRow): void {
+    this.detail.set(row);
   }
 
-  protected downloadPdf(payment: PaymentRecord): void {
-    void this.receipts.download(paymentReceipt(payment));
-  }
-
-  protected changeSort(sort: SortState): void {
-    this.sort.set(sort);
-    void this.loadToday();
-  }
-
-  protected reload(): void {
-    void this.loadToday();
+  protected downloadPdf(row: TicketRow): void {
+    void this.receipts.download(paymentReceipt(toPaymentRecord(row)));
   }
 
   protected countLabel(count: number): string {
-    return count === 1 ? '1 cobro registrado' : `${count} cobros registrados`;
+    return count === 1 ? '1 ticket' : `${count} tickets`;
   }
+}
 
-  /** Si llegan dos respuestas desordenadas, solo vale la de la última consulta. */
-  private async loadToday(): Promise<void> {
-    const sequence = ++this.loadSequence;
-    this.status.set('loading');
-    try {
-      const result = await firstValueFrom(this.service.listToday(this.sort()));
-      if (sequence !== this.loadSequence) {
-        return;
-      }
-      this.today.set(result);
-      this.error.set(null);
-      this.status.set(result.items.length === 0 ? 'empty' : 'success');
-    } catch (error) {
-      if (sequence !== this.loadSequence) {
-        return;
-      }
-      this.error.set(toErrorMessage(error));
-      this.status.set('error');
-    }
-  }
+/** Comprobante de un ticket cobrado. */
+function toPaymentRecord(row: TicketRow): PaymentRecord {
+  return {
+    id: row.id,
+    ticketNumber: row.ticketNumber,
+    paidAt: row.paidAt ?? row.issuedAt,
+    amount: row.amount ?? 0,
+    method: row.method,
+    cashierName: row.cashierName,
+  };
 }

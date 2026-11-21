@@ -42,50 +42,64 @@
   }
 </section>
 
-<section class="card panel panel--table" aria-labelledby="today-title">
-  <h2 id="today-title" class="table-title">Cobros realizados hoy</h2>
+<section class="card panel panel--table" aria-labelledby="tickets-title">
+  <h2 id="tickets-title" class="table-title">Tickets</h2>
   <app-async-state
-    [status]="status()"
-    [error]="error()"
-    loadingMessage="Cargando cobros…"
-    emptyTitle="Todavía no se registraron cobros hoy"
-    (retry)="reload()"
+    [status]="list.status()"
+    [error]="list.error()"
+    loadingMessage="Cargando tickets…"
+    emptyTitle="Todavía no hay tickets"
+    (retry)="list.reload()"
   >
     <div class="table-scroll">
       <table class="payments">
-        <caption class="sr-only">Cobros realizados hoy</caption>
+        <caption class="sr-only">Tickets y su estado de cobro</caption>
         <thead>
           <tr>
-            <th scope="col" appSortHeader="ticketNumber" [sort]="sort()" (sortChange)="changeSort($event)">Ticket</th>
-            <th scope="col" appSortHeader="paidAt" [sort]="sort()" (sortChange)="changeSort($event)">Hora</th>
-            <th scope="col" appSortHeader="amount" [sort]="sort()" (sortChange)="changeSort($event)">Monto</th>
-            <th scope="col" appSortHeader="method" [sort]="sort()" (sortChange)="changeSort($event)">Método</th>
-            <th scope="col" appSortHeader="cashierName" [sort]="sort()" (sortChange)="changeSort($event)">Cajero</th>
+            <th scope="col" appSortHeader="ticketNumber" [sort]="list.sort()" (sortChange)="list.changeSort($event)">Ticket</th>
+            <th scope="col" appSortHeader="issuedAt" [sort]="list.sort()" (sortChange)="list.changeSort($event)">Emisión</th>
+            <th scope="col" appSortHeader="status" [sort]="list.sort()" (sortChange)="list.changeSort($event)">Estado</th>
+            <th scope="col">Monto</th>
+            <th scope="col">Método</th>
+            <th scope="col">Cajero</th>
             <th scope="col">Acciones</th>
           </tr>
         </thead>
         <tbody>
-          @for (payment of today()?.items; track payment.id) {
+          @for (row of list.items(); track row.id) {
             <tr>
-              <td class="mono">{{ payment.ticketNumber }}</td>
-              <td class="mono">{{ payment.paidAt | dateTimeAr: 'time' }}</td>
-              <td class="amount">{{ payment.amount | currencyAr }}</td>
-              <td class="muted">{{ payment.method ? methodLabel(payment.method) : '—' }}</td>
-              <td class="muted">{{ payment.cashierName ?? '—' }}</td>
+              <td class="mono">{{ row.ticketNumber }}</td>
+              <td class="muted">{{ row.issuedAt | dateTimeAr }}</td>
+              <td><app-status-badge [variant]="statusVariant(row.status)">{{ statusLabel(row.status) }}</app-status-badge></td>
+              <td class="amount">{{ row.amount !== null ? (row.amount | currencyAr) : '—' }}</td>
+              <td class="muted">{{ row.method ? methodLabel(row.method) : '—' }}</td>
+              <td class="muted">{{ row.cashierName ?? '—' }}</td>
               <td><div class="actions">
-                <button type="button" class="link" [attr.aria-label]="'Ver detalle del ticket ' + payment.ticketNumber" (click)="openDetail(payment)">Ver detalle</button>
-                <button type="button" class="link" [attr.aria-label]="'Generar PDF del ticket ' + payment.ticketNumber" (click)="downloadPdf(payment)">Generar PDF</button>
+                @if (row.status === 'PAID' || row.status === 'USED') {
+                  <button type="button" class="link" [attr.aria-label]="'Ver detalle del ticket ' + row.ticketNumber" (click)="openDetail(row)">Ver detalle</button>
+                  <button type="button" class="link" [attr.aria-label]="'Generar PDF del ticket ' + row.ticketNumber" (click)="downloadPdf(row)">Generar PDF</button>
+                } @else {
+                  <span class="muted">—</span>
+                }
               </div></td>
             </tr>
           }
         </tbody>
       </table>
     </div>
-    @if (today(); as summary) {
+    @if (list.data(); as page) {
       <footer class="summary">
-        <span>{{ countLabel(summary.count) }}</span>
-        <strong>Total: {{ summary.totalAmount | currencyAr }}</strong>
+        <span>{{ countLabel(page.totalElements) }}</span>
       </footer>
+      @if (page.totalPages > 1) {
+        <app-pagination
+          [page]="page.page"
+          [size]="page.size"
+          [totalElements]="page.totalElements"
+          [totalPages]="page.totalPages"
+          (pageChange)="list.goToPage($event)"
+        />
+      }
     }
   </app-async-state>
 </section>

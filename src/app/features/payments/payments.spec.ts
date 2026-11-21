@@ -44,31 +44,60 @@ describe('PaymentsComponent', () => {
     expect(el.querySelector('#search-title')?.textContent?.trim()).toBe('Buscar ticket');
   });
 
-  it('lista los cobros de hoy con total y cantidad', async () => {
+  it('lista todos los tickets, no solo los cobrados, con la cantidad total', async () => {
     const { el } = await setup();
     const rows = el.querySelectorAll('.payments tbody tr');
-    expect(rows.length).toBe(5);
-    expect(rows[0].textContent).toContain('10:47');
-    expect(rows[0].textContent).toContain('$2.560');
-    expect(rows[0].textContent).toContain('Efectivo');
-    expect(rows[0].textContent).toContain('M. Acosta');
-    expect(el.querySelector('.summary')?.textContent).toContain('5 cobros registrados');
-    expect(el.querySelector('.summary')?.textContent).toContain('Total: $8.640');
+    expect(rows.length).toBe(9);
+    expect(el.querySelector('.summary')?.textContent).toContain('9 tickets');
+    const headers = Array.from(el.querySelectorAll('.payments thead th')).map((th) => th.textContent?.trim());
+    expect(headers).toEqual(['Ticket', 'Emisión', 'Estado', 'Monto', 'Método', 'Cajero', 'Acciones']);
   });
 
-  it('ordena la tabla por monto y por ticket', async () => {
+  it('muestra el estado de cada ticket con su color', async () => {
+    const { el } = await setup();
+    const badge = (row: number) => el.querySelectorAll('.payments tbody tr')[row].querySelector('.badge')!;
+    // más recientes primero: 0028, 0031, 0024, 0019, 0012, 0042, 0039, 0008, 0005
+    expect(badge(0).textContent?.trim()).toBe('Cobrado');
+    expect(badge(0).classList).toContain('badge--success');
+    expect(badge(5).textContent?.trim()).toBe('Pendiente de cobro');
+    expect(badge(5).classList).toContain('badge--warning');
+    expect(badge(7).textContent?.trim()).toBe('Utilizado');
+    expect(badge(7).classList).toContain('badge--info');
+    expect(badge(8).textContent?.trim()).toBe('Cancelado');
+    expect(badge(8).classList).toContain('badge--danger');
+  });
+
+  it('en los cobrados muestra el método, y el cajero solo cuando fue en efectivo', async () => {
+    const { el } = await setup();
+    const rows = el.querySelectorAll('.payments tbody tr');
+    // 0028: Mercado Pago, sin cajero
+    expect(rows[0].textContent).toContain('Mercado Pago');
+    expect(rows[0].textContent).toContain('$980');
+    expect(rows[0].querySelectorAll('td')[5].textContent?.trim()).toBe('—');
+    // 0031: efectivo, cobrado por un administrador
+    expect(rows[1].textContent).toContain('Efectivo');
+    expect(rows[1].querySelectorAll('td')[5].textContent?.trim()).toBe('M. Acosta');
+    // 0019: saldo de la app, sin cajero
+    expect(rows[3].textContent).toContain('Saldo Parko');
+    // los que no se cobraron no tienen método ni cajero
+    expect(rows[5].querySelectorAll('td')[4].textContent?.trim()).toBe('—');
+    expect(rows[5].querySelectorAll('td')[5].textContent?.trim()).toBe('—');
+    expect(rows[8].querySelectorAll('td')[4].textContent?.trim()).toBe('—');
+  });
+
+  it('ordena la tabla por ticket y por estado', async () => {
     const { el, click, settle } = await setup();
-    const amounts = () => Array.from(el.querySelectorAll('.payments .amount')).map((td) => td.textContent?.trim());
-    click('th[appSortHeader="amount"] button');
-    await settle();
-    expect(amounts()).toEqual(['$760', '$980', '$1.240', '$2.560', '$3.100']);
-    click('th[appSortHeader="amount"] button');
-    await settle();
-    expect(amounts()[0]).toBe('$3.100');
-    expect(el.querySelector('th[appSortHeader="amount"]')?.getAttribute('aria-sort')).toBe('descending');
     click('th[appSortHeader="ticketNumber"] button');
     await settle();
-    expect(el.querySelector('.payments tbody tr')?.textContent).toContain('-0012');
+    expect(el.querySelector('.payments tbody tr')?.textContent).toContain('-0005');
+    expect(el.querySelector('th[appSortHeader="ticketNumber"]')?.getAttribute('aria-sort')).toBe('ascending');
+    click('th[appSortHeader="ticketNumber"] button');
+    await settle();
+    expect(el.querySelector('.payments tbody tr')?.textContent).toContain('-0042');
+
+    click('th[appSortHeader="status"] button');
+    await settle();
+    expect(el.querySelector('.payments tbody tr .badge')?.textContent?.trim()).toBe('Cancelado');
   });
 
   it('pide el dato si se busca vacío', async () => {
@@ -107,9 +136,12 @@ describe('PaymentsComponent', () => {
     await settle(30);
     expect(el.querySelector('[role=dialog]')).toBeNull();
     expect(toast.toasts()[0].message).toContain('Cobro registrado');
-    expect(tickets().length).toBe(6);
-    expect(el.querySelector('.summary')?.textContent).toContain('6 cobros registrados');
-    expect(el.querySelector('.summary')?.textContent).toContain('Total: $11.640');
+    // el ticket ya estaba en la lista: ahora figura cobrado en efectivo
+    expect(tickets().length).toBe(9);
+    const paidRow = Array.from(el.querySelectorAll('.payments tbody tr')).find((r) => r.textContent?.includes('-0042'))!;
+    expect(paidRow.querySelector('.badge')?.textContent?.trim()).toBe('Cobrado');
+    expect(paidRow.textContent).toContain('Efectivo');
+    expect(paidRow.textContent).toContain('M. Acosta');
     expect(el.querySelector('.result')?.textContent).toContain('Cobrado');
     expect(el.querySelector('.result .btn--primary')).toBeNull();
   });
@@ -163,8 +195,9 @@ describe('PaymentsComponent', () => {
       await submit(el, settle);
       expect(el.querySelector('[role=dialog]')).toBeNull();
       expect(toast.toasts()[0].message).toContain('Pago registrado: $3.000');
-      expect(tickets().length).toBe(6);
-      expect(el.querySelector('.summary')?.textContent).toContain('Total: $11.640');
+      expect(tickets().length).toBe(9);
+      const paidRow = Array.from(el.querySelectorAll('.payments tbody tr')).find((r) => r.textContent?.includes('-0042'))!;
+      expect(paidRow.querySelector('.badge')?.textContent?.trim()).toBe('Cobrado');
     });
 
     it('muestra el error del backend dentro del formulario (monto distinto o ticket inexistente)', async () => {
@@ -194,14 +227,18 @@ describe('PaymentsComponent', () => {
     });
   });
 
-  it('cada cobro tiene "Ver detalle" (comprobante en rojo) y "Generar PDF"', async () => {
+  it('cada ticket cobrado tiene "Ver detalle" (comprobante en rojo) y "Generar PDF"; los demás no', async () => {
     const { el, settle } = await setup();
-    const row = el.querySelector('.payments tbody tr') as HTMLElement;
-    const buttons = Array.from(row.querySelectorAll('button')).map((b) => b.textContent?.trim());
-    expect(buttons).toEqual(['Ver detalle', 'Generar PDF']);
-    (row.querySelector('button') as HTMLButtonElement).click();
+    const rows = el.querySelectorAll('.payments tbody tr');
+    const buttons = (row: Element) => Array.from(row.querySelectorAll('button')).map((b) => b.textContent?.trim());
+    expect(buttons(rows[0])).toEqual(['Ver detalle', 'Generar PDF']);
+    expect(buttons(rows[5])).toEqual([]); // pendiente
+    expect(buttons(rows[8])).toEqual([]); // cancelado
+
+    (rows[0].querySelector('button') as HTMLButtonElement).click();
     await settle();
     expect(el.querySelector('.receipt__title')?.textContent).toContain('Pago realizado');
-    expect(el.querySelector('.receipt__amount--debit')?.textContent?.trim()).toBe('- $2.560');
+    expect(el.querySelector('.receipt__amount--debit')?.textContent?.trim()).toBe('- $980');
+    expect(el.querySelector('[role=dialog]')?.textContent).toContain('Mercado Pago');
   });
 });
