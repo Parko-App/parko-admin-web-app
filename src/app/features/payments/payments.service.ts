@@ -127,7 +127,8 @@ export class HttpPaymentsService extends PaymentsService {
               }),
           );
         }
-        return this.api.post<TicketDetailDto>(`admin/tickets/${encodeURIComponent(detail.id)}/pay`, {});
+        // El monto elegido viaja al backend, que lo vuelve a validar contra la transacción pendiente del ticket.
+        return this.api.post<TicketDetailDto>(`admin/tickets/${encodeURIComponent(detail.id)}/pay`, { amount: request.amount });
       }),
       map((paid) => ({
         id: paid.payment?.transactionId ?? paid.id,

@@ -163,6 +163,7 @@ describe('integración: pagos', () => {
     await flush();
     const pay = http.expectOne(`${API}/admin/tickets/t1/pay`);
     expect(pay.request.method).toBe('POST');
+    expect(pay.request.body).toEqual({ amount: 3000 }); // el backend vuelve a validar el monto
     pay.flush({ ...detail('PAID'), paidAt: '2026-11-21T10:47:00', payment: { transactionId: 'tx1', paymentProvider: 'CASH', amount: 3000, createdAt: '2026-11-21T10:47:00' } });
     expect(await result).toMatchObject({ id: 'tx1', amount: 3000, method: 'CASH', paidAt: '2026-11-21T10:47:00-03:00' });
   });
