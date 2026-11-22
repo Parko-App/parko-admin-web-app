@@ -48,9 +48,11 @@ export const routes: Routes = [
         providers: [VEHICLES_SERVICE_PROVIDER],
         loadComponent: () => import('./features/vehicles/vehicles.component').then((m) => m.VehiclesComponent),
       },
+      // La pantalla se llamaba "Pagos": se conserva la URL vieja para no romper enlaces ni favoritos.
+      { path: 'pagos', redirectTo: 'tickets', pathMatch: 'full' },
       {
-        path: 'pagos',
-        title: 'Procesamiento de Pagos',
+        path: 'tickets',
+        title: 'Tickets',
         providers: [PAYMENTS_SERVICE_PROVIDER],
         loadComponent: () => import('./features/payments/payments.component').then((m) => m.PaymentsComponent),
       },

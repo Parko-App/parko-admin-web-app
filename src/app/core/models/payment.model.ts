@@ -1,5 +1,5 @@
 /**
- * Pagos (admin-service):
+ * Tickets (antes "Pagos", admin-service):
  *   GET  admin/tickets/number/{ticketNumber}  -> ticket (404 si no existe)
  *   POST admin/tickets/{id}/pay               -> cobro en efectivo (409 si el ticket no está pendiente)
  *   GET  admin/tickets?from=&to=&status=&page=&sort= -> listado paginado de TODOS los tickets, con el método de pago
@@ -57,7 +57,7 @@ export interface TicketExtras {
   balance: number | null;
 }
 
-/** Fila del listado de tickets de la pantalla Pagos. */
+/** Fila del listado de tickets de la pantalla Tickets. */
 export interface TicketRow {
   id: string;
   ticketNumber: string;

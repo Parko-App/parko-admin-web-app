@@ -31,7 +31,7 @@ export function paymentReceipt(payment: PaymentRecord): ReceiptData {
 }
 
 /**
- * Comprobante de un ticket de la pantalla Pagos. Si está cobrado, es el comprobante del pago; si está pendiente,
+ * Comprobante de un ticket de la pantalla Tickets. Si está cobrado, es el comprobante del pago; si está pendiente,
  * es el ticket a cobrar y su PDF lleva el QR del ticket (qr_data) para escanearlo y pagarlo.
  * En ambos casos suma el saldo del usuario al momento de la consulta (los visitantes no tienen cuenta).
  */

@@ -28,7 +28,7 @@ describe('Layout administrativo', () => {
     await fixture.whenStable();
     const el: HTMLElement = fixture.nativeElement;
     const labels = Array.from(el.querySelectorAll('.nav-link__label')).map((n) => n.textContent?.trim());
-    expect(labels).toEqual(['Dashboard', 'Usuarios', 'Vehículos', 'Pagos', 'Carga de saldos', 'Reportes', 'Accesos', 'Configuración']);
+    expect(labels).toEqual(['Dashboard', 'Usuarios', 'Vehículos', 'Tickets', 'Carga de saldos', 'Reportes', 'Accesos', 'Configuración']);
     expect(el.textContent).not.toContain('Llaves');
     expect(el.textContent).toContain('Cerrar sesión');
   });
@@ -59,13 +59,13 @@ describe('Layout administrativo', () => {
 
   it('resalta la opción activa', async () => {
     const router = TestBed.inject(Router);
-    await router.navigateByUrl('/admin/pagos');
+    await router.navigateByUrl('/admin/tickets');
     const fixture = TestBed.createComponent(SidebarComponent);
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
     const active = fixture.nativeElement.querySelector('.nav-link--active');
-    expect(active?.textContent).toContain('Pagos');
+    expect(active?.textContent).toContain('Tickets');
     expect(active?.getAttribute('aria-current')).toBe('page');
   });
 
@@ -81,6 +81,19 @@ describe('Layout administrativo', () => {
     expect(el.querySelector('time')?.textContent).toMatch(/ de .* de \d{4}/);
     expect(el.textContent).not.toContain('Sistema operativo');
     expect(el.querySelector('button')).toBeNull(); // sin campana de notificaciones
+  });
+
+  it('la pantalla se llama Tickets (menú, título y URL) y la URL vieja /pagos redirige', async () => {
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/admin/pagos');
+    expect(router.url).toBe('/admin/tickets');
+
+    const fixture = TestBed.createComponent(TopbarComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('h1')?.textContent).toContain('Tickets');
+    expect(fixture.nativeElement.querySelector('h1')?.textContent).not.toContain('Pagos');
   });
 
   it('redirige la raíz al dashboard dentro del layout', async () => {

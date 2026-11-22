@@ -82,16 +82,16 @@ describe('guards', () => {
   it('redirige a /login con returnUrl si no hay sesión', async () => {
     setup();
     const router = TestBed.inject(Router);
-    await router.navigateByUrl('/admin/pagos');
-    expect(router.url).toBe('/login?returnUrl=%2Fadmin%2Fpagos');
+    await router.navigateByUrl('/admin/tickets');
+    expect(router.url).toBe('/login?returnUrl=%2Fadmin%2Ftickets');
   });
 
   it('deja entrar al panel con sesión y saca al usuario de /login', async () => {
     const auth = setup();
     await auth.login('admin@parko.site', 'Admin1234!');
     const router = TestBed.inject(Router);
-    await router.navigateByUrl('/admin/pagos');
-    expect(router.url).toBe('/admin/pagos');
+    await router.navigateByUrl('/admin/tickets');
+    expect(router.url).toBe('/admin/tickets');
     await router.navigateByUrl('/login');
     expect(router.url).toBe('/admin/dashboard');
   });
