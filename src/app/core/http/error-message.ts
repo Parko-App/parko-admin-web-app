@@ -19,6 +19,9 @@ export function toErrorMessage(error: unknown): string {
         return serverMessage ?? 'No se encontró el recurso solicitado.';
       case 409:
         return serverMessage ?? 'La operación no se pudo completar por un conflicto con los datos existentes.';
+      case 502:
+        // Un servicio del que depende el backend (access-service, Keycloak) no respondió: el mensaje ya es legible.
+        return serverMessage ?? 'Un servicio del que depende el sistema no respondió. Intentá nuevamente en unos minutos.';
       default:
         if (error.status >= 500) {
           return 'Ocurrió un error en el servidor. Intentá nuevamente en unos minutos.';

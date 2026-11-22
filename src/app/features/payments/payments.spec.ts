@@ -2,6 +2,7 @@ import { registerLocaleData } from '@angular/common';
 import localeEsAr from '@angular/common/locales/es-AR';
 import { LOCALE_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { ToastService } from '../../core/notifications/toast.service';
 import { ReceiptService } from '../../shared/receipt/receipt.service';
@@ -226,6 +227,177 @@ describe('PaymentsComponent', () => {
           expect(el.querySelector('[role=alert]')?.textContent).toContain('El ticket ya fue cobrado.');
         }
       }
+    });
+  });
+
+  describe('generar ingreso y egreso por patente', () => {
+    const open = async (click: (selector: string, index?: number) => void, settle: () => Promise<void>, which: 'ENTRY' | 'EXIT') => {
+      click('.panel__actions .btn:not(.btn--primary)', which === 'ENTRY' ? 0 : 1);
+      await settle();
+    };
+    const typePlate = (el: HTMLElement, plate: string) => {
+      const input = el.querySelector('#plate-action-plate') as HTMLInputElement;
+      input.value = plate;
+      input.dispatchEvent(new Event('input'));
+    };
+    const submit = async (el: HTMLElement, settle: (ms?: number) => Promise<void>) => {
+      (el.querySelector('#plate-action-form') as HTMLFormElement).dispatchEvent(new Event('submit'));
+      await settle(30);
+    };
+    const rowOf = (el: HTMLElement, ticket: string) =>
+      Array.from(el.querySelectorAll('.payments tbody tr')).find((r) => r.textContent?.includes(ticket));
+    const dialogText = (el: HTMLElement) => el.querySelector('[role=dialog]')?.textContent ?? '';
+
+    /** Espía la descarga del PDF (no se genera el archivo real). */
+    const spyDownload = () => vi.spyOn(TestBed.inject(ReceiptService), 'download').mockResolvedValue(true);
+
+    it('la pantalla tiene los botones Generar ingreso, Generar egreso y Registrar pago', async () => {
+      const { el } = await setup();
+      const labels = Array.from(el.querySelectorAll('.panel__actions .btn')).map((b) => b.textContent?.trim());
+      expect(labels).toEqual(['Generar ingreso', 'Generar egreso', 'Registrar pago']);
+    });
+
+    it('cada botón abre su diálogo', async () => {
+      const { el, click, settle } = await setup();
+      await open(click, settle, 'ENTRY');
+      expect(dialogText(el)).toContain('Generar ingreso');
+      expect(dialogText(el)).toContain('de visitante');
+      (el.querySelector('[role=dialog] .btn:not(.btn--primary)') as HTMLButtonElement).click();
+      await settle();
+      expect(el.querySelector('[role=dialog]')).toBeNull();
+
+      await open(click, settle, 'EXIT');
+      expect(dialogText(el)).toContain('Generar egreso');
+      expect(dialogText(el)).toContain('ya está pagado');
+    });
+
+    it('valida la patente antes de enviar', async () => {
+      const { el, click, settle } = await setup();
+      const entry = vi.spyOn(TestBed.inject(PaymentsService), 'generateEntry');
+      await open(click, settle, 'ENTRY');
+
+      await submit(el, settle);
+      expect(dialogText(el)).toContain('Ingresá la patente.');
+
+      typePlate(el, 'AB12');
+      await submit(el, settle);
+      expect(dialogText(el)).toContain('La patente no es válida');
+      expect(entry).not.toHaveBeenCalled();
+    });
+
+    it('ingreso de una patente que no está registrada: genera un visitante y lo muestra en la lista', async () => {
+      const { el, click, settle, toast, tickets } = await setup();
+      spyDownload();
+      const entry = vi.spyOn(TestBed.inject(PaymentsService), 'generateEntry');
+      await open(click, settle, 'ENTRY');
+
+      typePlate(el, 'zz 999-xx');
+      await submit(el, settle);
+
+      expect(entry).toHaveBeenCalledWith('ZZ999XX'); // sin espacios ni guiones y en mayúsculas
+      expect(el.querySelector('[role=dialog]')).toBeNull();
+      expect(toast.toasts()[0].message).toContain('Ingreso de visitante generado');
+      expect(tickets().length).toBe(10);
+      const row = rowOf(el, '-103')!;
+      expect(row.querySelector('.badge')?.textContent?.trim()).toBe('Pendiente de cobro');
+    });
+
+    it('el PDF del ingreso es el ticket del módulo admin (el mismo de "Generar PDF"), con el QR del ticket', async () => {
+      const { el, click, settle, tickets } = await setup();
+      const download = spyDownload();
+      await open(click, settle, 'ENTRY');
+
+      typePlate(el, 'ZZ999XX');
+      await submit(el, settle);
+
+      expect(download).toHaveBeenCalledTimes(1);
+      const receipt = download.mock.calls[0][0];
+      const number = receipt.code;
+      expect(number).toMatch(/^TKT-\d{8}-103$/);
+      expect(receipt.title).toBe('Ticket pendiente de pago');
+      expect(receipt.qrData).toBe(`https://parko.example/pagar/${number}`); // el qr_data del ticket
+      expect(receipt.rows.find((r) => r.label === 'Patente')?.value).toBe('ZZ 999 XX');
+      expect(receipt.rows.find((r) => r.label === 'Tipo')?.value).toBe('Visitante');
+      expect(receipt.amount).toBe(3000);
+
+      // es el mismo comprobante que arma "Generar PDF" sobre esa fila de la lista
+      download.mockClear();
+      (rowOf(el, '-103')!.querySelectorAll('button')[1] as HTMLButtonElement).click();
+      await settle();
+      expect(download.mock.calls[0][0]).toEqual(receipt);
+      expect(tickets().length).toBe(10);
+    });
+
+    it('ingreso de una patente registrada que ya quedó pago: no hay ticket para cobrar, no se descarga PDF', async () => {
+      const { el, click, settle, toast } = await setup();
+      const download = spyDownload();
+      await open(click, settle, 'ENTRY');
+
+      typePlate(el, 'NVZ087');
+      await submit(el, settle);
+
+      expect(toast.toasts()[0].message).toContain('Ingreso de usuario registrado generado');
+      expect(download).not.toHaveBeenCalled();
+    });
+
+    it('si falla el PDF, el ingreso queda generado y se avisa', async () => {
+      const { el, click, settle, toast } = await setup();
+      spyDownload();
+      const service = TestBed.inject(PaymentsService);
+      vi.spyOn(service, 'ticketExtras').mockReturnValue(throwError(() => new Error('boom')));
+      await open(click, settle, 'ENTRY');
+
+      typePlate(el, 'ZZ999XX');
+      await submit(el, settle);
+
+      expect(el.querySelector('[role=dialog]')).toBeNull(); // el ingreso se hizo
+      const messages = toast.toasts().map((t) => t.message);
+      expect(messages.some((m) => m.includes('Ingreso de visitante generado'))).toBe(true);
+      expect(messages.some((m) => m.includes('no se pudo preparar el PDF del ticket'))).toBe(true);
+    });
+
+    it('si la patente ya está adentro, muestra el error dentro del diálogo y no lo cierra', async () => {
+      const { el, click, settle, toast } = await setup();
+      await open(click, settle, 'ENTRY');
+
+      typePlate(el, 'AB123CD'); // tiene el ticket 0031 activo en la demostración
+      await submit(el, settle);
+
+      expect(el.querySelector('[role=dialog] [role=alert]')?.textContent).toContain('ya tiene un ingreso activo');
+      expect(toast.toasts().length).toBe(0);
+    });
+
+    it('egreso de una patente con el ticket pagado: lo genera y el ticket queda utilizado', async () => {
+      const { el, click, settle, toast } = await setup();
+      await open(click, settle, 'EXIT');
+
+      typePlate(el, 'ab123cd'); // ticket 0031, pagado
+      await submit(el, settle);
+
+      expect(el.querySelector('[role=dialog]')).toBeNull();
+      expect(toast.toasts()[0].message).toContain('Egreso generado para AB123CD');
+      expect(rowOf(el, '-0031')!.querySelector('.badge')?.textContent?.trim()).toBe('Utilizado');
+    });
+
+    it('egreso con el ticket pendiente de pago: se rechaza y explica por qué', async () => {
+      const { el, click, settle } = await setup();
+      await open(click, settle, 'EXIT');
+
+      typePlate(el, 'XY987ZW'); // ticket 0042, pendiente
+      await submit(el, settle);
+
+      expect(el.querySelector('[role=dialog] [role=alert]')?.textContent).toContain('no está pagado');
+      expect(rowOf(el, '-0042')!.querySelector('.badge')?.textContent?.trim()).toBe('Pendiente de cobro');
+    });
+
+    it('egreso de una patente sin ingreso activo: informa que no lo tiene', async () => {
+      const { el, click, settle } = await setup();
+      await open(click, settle, 'EXIT');
+
+      typePlate(el, 'ZZ999XX');
+      await submit(el, settle);
+
+      expect(el.querySelector('[role=dialog] [role=alert]')?.textContent).toContain('no tiene un ingreso activo');
     });
   });
 

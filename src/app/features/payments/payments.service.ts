@@ -7,6 +7,8 @@ import {
   PAYMENT_METHOD_LABELS,
   PaymentMethod,
   PaymentRecord,
+  PlateEntryResult,
+  PlateExitResult,
   RegisterPaymentRequest,
   TICKET_STATUS_LABELS,
   TicketExtras,
@@ -18,6 +20,7 @@ import {
 import { ApiClient } from '../../core/services/api-client.service';
 import { todayInArgentina } from '../../shared/utils/dates';
 import { ListQuery } from '../../shared/utils/paged-list';
+import { isValidPlate, normalizePlate } from '../../shared/utils/plate';
 import { fromServerDateTime } from '../../shared/utils/server-dates';
 import { sortRows, toSortParam } from '../../shared/utils/sort';
 
@@ -29,6 +32,10 @@ export abstract class PaymentsService {
   abstract listTickets(query: ListQuery): Observable<PageResponse<TicketRow>>;
   /** Saldo actual del usuario y contenido del QR del ticket; se consultan al abrir el detalle o bajar el PDF. */
   abstract ticketExtras(ticketId: string): Observable<TicketExtras>;
+  /** Genera el ingreso de una patente escrita por el administrador (registrado si el vehículo existe, visitante si no). */
+  abstract generateEntry(plate: string): Observable<PlateEntryResult>;
+  /** Genera el egreso de una patente con una sesión activa y el ticket pagado. */
+  abstract generateExit(plate: string): Observable<PlateExitResult>;
 }
 
 /** Orden en memoria de la demostración; en la API real lo hace el servidor (ticketNumber, issuedAt, status). */
@@ -89,6 +96,10 @@ const toTicket = (dto: TicketDetailDto): VisitorTicket => ({
   amountDue: Number(dto.amount ?? 0),
   status: STATUS_FROM_DTO[dto.status],
 });
+
+interface PlateEntryDto extends Omit<PlateEntryResult, 'ticketStatus'> {
+  ticketStatus: TicketDtoStatus;
+}
 
 const toMethod = (method: string | null | undefined): PaymentMethod | null =>
   method === 'CASH' || method === 'MERCADO_PAGO' || method === 'BALANCE' ? method : null;
@@ -154,6 +165,16 @@ export class HttpPaymentsService extends PaymentsService {
         balance: dto.owner?.balance === null || dto.owner?.balance === undefined ? null : Number(dto.owner.balance),
       })),
     );
+  }
+
+  generateEntry(plate: string): Observable<PlateEntryResult> {
+    return this.api.post<PlateEntryDto>('admin/access/entry', { plate: normalizePlate(plate) }).pipe(
+      map((dto) => ({ ...dto, ticketStatus: STATUS_FROM_DTO[dto.ticketStatus] })),
+    );
+  }
+
+  generateExit(plate: string): Observable<PlateExitResult> {
+    return this.api.post<PlateExitResult>('admin/access/exit', { plate: normalizePlate(plate) });
   }
 
   private findDetail(code: string): Observable<TicketDetailDto> {
@@ -248,6 +269,61 @@ export class MockPaymentsService extends PaymentsService {
     };
     this.payments = [record, ...this.payments];
     return of({ ...record });
+  }
+
+  /** Patentes que la demostración considera de vehículos registrados. */
+  private static readonly REGISTERED_PLATES = ['NVZ087'];
+
+  generateEntry(plate: string): Observable<PlateEntryResult> {
+    const normalized = normalizePlate(plate);
+    if (!isValidPlate(normalized)) {
+      return httpError(400, 'La patente no es válida. Usá el formato ABC123 o AB123CD');
+    }
+    if (this.tickets.some((t) => t.plate === normalized && (t.status === 'PENDING' || t.status === 'PAID'))) {
+      return httpError(409, `La patente ${normalized} ya tiene un ingreso activo`);
+    }
+    const registered = MockPaymentsService.REGISTERED_PLATES.includes(normalized);
+    const ticket: VisitorTicket = {
+      ticketNumber: ticketNumber(String(100 + this.tickets.length)),
+      entryAt: new Date().toISOString(),
+      plate: normalized,
+      sessionType: registered ? 'REGISTERED' : 'VISITOR',
+      amountDue: registered ? 1500 : 3000,
+      status: registered ? 'PAID' : 'PENDING',
+    };
+    this.tickets = [ticket, ...this.tickets];
+    return of({
+      ticketId: `row-${ticket.ticketNumber}`,
+      ticketNumber: ticket.ticketNumber,
+      ticketStatus: ticket.status,
+      sessionType: ticket.sessionType,
+      plate: normalized,
+      message: registered
+        ? 'Ingreso de usuario registrado generado.'
+        : 'Ingreso de visitante generado. Entregá el ticket para que pueda pagar.',
+    });
+  }
+
+  generateExit(plate: string): Observable<PlateExitResult> {
+    const normalized = normalizePlate(plate);
+    if (!isValidPlate(normalized)) {
+      return httpError(400, 'La patente no es válida. Usá el formato ABC123 o AB123CD');
+    }
+    const ticket = this.tickets.find((t) => t.plate === normalized && (t.status === 'PENDING' || t.status === 'PAID'));
+    if (!ticket) {
+      return httpError(404, `La patente ${normalized} no tiene un ingreso activo`);
+    }
+    if (ticket.status === 'PENDING') {
+      return httpError(409, `El ticket ${ticket.ticketNumber} no está pagado (pendiente de pago): no se puede generar el egreso`);
+    }
+    ticket.status = 'USED';
+    return of({
+      ticketId: `row-${ticket.ticketNumber}`,
+      ticketNumber: ticket.ticketNumber,
+      sessionType: ticket.sessionType,
+      plate: normalized,
+      message: `Egreso generado para ${normalized}`,
+    });
   }
 
   /** Demostración: los usuarios registrados tienen saldo, los visitantes no; el QR es un link de pago de ejemplo. */

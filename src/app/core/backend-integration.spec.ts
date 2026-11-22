@@ -2,6 +2,7 @@ import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
+import { toErrorMessage } from './http/error-message';
 import { HttpPaymentsService } from '../features/payments/payments.service';
 import { HttpReportsService } from '../features/reports/reports.service';
 import { HttpUsersService } from '../features/users/users.service';
@@ -195,6 +196,63 @@ describe('integración: pagos', () => {
     const visitor = firstValueFrom(service.ticketExtras('t2'));
     http.expectOne(`${API}/admin/tickets/t2`).flush({ ...detail('PENDING_PAYMENT'), qrData: 'qr-visitante', owner: null });
     expect(await visitor).toEqual({ qrData: 'qr-visitante', balance: null });
+  });
+
+  it('genera un ingreso por patente y mapea el estado del ticket', async () => {
+    const http = setup();
+    const service = TestBed.runInInjectionContext(() => new HttpPaymentsService());
+
+    const result = firstValueFrom(service.generateEntry('ab 123-cd'));
+    const req = http.expectOne(`${API}/admin/access/entry`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ plate: 'AB123CD' }); // normalizada
+    req.flush({
+      ticketId: 't1',
+      ticketNumber: 'TCK-ABCD1234',
+      ticketStatus: 'PENDING_PAYMENT',
+      sessionType: 'VISITOR',
+      plate: 'AB123CD',
+      message: 'Ingreso de visitante generado.',
+    });
+
+    expect(await result).toEqual({
+      ticketId: 't1',
+      ticketNumber: 'TCK-ABCD1234',
+      ticketStatus: 'PENDING',
+      sessionType: 'VISITOR',
+      plate: 'AB123CD',
+      message: 'Ingreso de visitante generado.',
+    });
+  });
+
+  it('un ingreso de usuario registrado queda pagado', async () => {
+    const http = setup();
+    const result = firstValueFrom(TestBed.runInInjectionContext(() => new HttpPaymentsService()).generateEntry('NVZ087'));
+    http.expectOne(`${API}/admin/access/entry`).flush({
+      ticketId: 't2', ticketNumber: 'TCK-1', ticketStatus: 'PAID', sessionType: 'REGISTERED', plate: 'NVZ087', message: 'ok',
+    });
+
+    expect(await result).toMatchObject({ ticketStatus: 'PAID', sessionType: 'REGISTERED' });
+  });
+
+  it('genera un egreso por patente', async () => {
+    const http = setup();
+    const result = firstValueFrom(TestBed.runInInjectionContext(() => new HttpPaymentsService()).generateExit('nvz 087'));
+    const req = http.expectOne(`${API}/admin/access/exit`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ plate: 'NVZ087' });
+    req.flush({ ticketId: 't2', ticketNumber: 'TCK-1', sessionType: 'REGISTERED', plate: 'NVZ087', message: 'Egreso generado para NVZ087' });
+
+    expect(await result).toMatchObject({ plate: 'NVZ087', message: 'Egreso generado para NVZ087' });
+  });
+
+  it('muestra el mensaje del backend cuando access-service no responde (502)', () => {
+    const error = new HttpErrorResponse({
+      status: 502,
+      error: { message: 'No se pudo comunicar con access-service. Verificá que esté en funcionamiento.' },
+    });
+    expect(toErrorMessage(error)).toBe('No se pudo comunicar con access-service. Verificá que esté en funcionamiento.');
+    expect(toErrorMessage(new HttpErrorResponse({ status: 502 }))).toContain('no respondió');
   });
 
   it('lista todos los tickets con su estado, método de pago y cajero', async () => {

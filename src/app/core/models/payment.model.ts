@@ -49,6 +49,26 @@ export interface PaymentRecord {
   cashierName: string | null;
 }
 
+/** Ingreso generado por un administrador (POST admin/access/entry). */
+export interface PlateEntryResult {
+  ticketId: string;
+  ticketNumber: string;
+  ticketStatus: TicketStatus;
+  /** REGISTERED si la patente es de un vehículo registrado; VISITOR en otro caso. */
+  sessionType: TicketSessionType;
+  plate: string;
+  message: string;
+}
+
+/** Egreso generado por un administrador (POST admin/access/exit). */
+export interface PlateExitResult {
+  ticketId: string;
+  ticketNumber: string;
+  sessionType: TicketSessionType;
+  plate: string;
+  message: string;
+}
+
 /** Datos que solo trae el detalle de un ticket y que necesita el comprobante. */
 export interface TicketExtras {
   /** Contenido del QR del ticket (columna qr_data). */

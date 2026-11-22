@@ -4,7 +4,8 @@
 .panel--table { padding: 0; overflow: hidden; }
 
 h2 { margin: 0; font-size: 15px; font-weight: 600; color: var(--color-text); }
-.panel__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.panel__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.panel__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
 .table-title { padding: 20px; margin: 0; border-bottom: 1px solid var(--color-border); }
 
 .search { display: flex; gap: 12px; }

@@ -1,0 +1,40 @@
+<app-modal [open]="mode() !== null" [title]="texts().title" (closed)="closed.emit()">
+  <form id="plate-action-form" [formGroup]="form" (submit)="$event.preventDefault(); submit()" novalidate>
+    @if (error(); as message) {
+      <div class="form-error" role="alert">{{ message }}</div>
+    }
+
+    <p class="intro">{{ texts().intro }}</p>
+
+    <div class="field">
+      <label for="plate-action-plate">Patente</label>
+      <input
+        id="plate-action-plate"
+        formControlName="plate"
+        placeholder="AB123CD o ABC123"
+        autocomplete="off"
+        spellcheck="false"
+        maxlength="10"
+        class="mono"
+        [attr.aria-invalid]="showError()"
+        [attr.aria-describedby]="showError() ? 'plate-action-error' : null"
+      />
+      @if (showError()) {
+        <p class="field__error" id="plate-action-error">
+          @if (form.controls.plate.hasError('required')) {
+            Ingresá la patente.
+          } @else {
+            La patente no es válida. Usá el formato ABC123 o AB123CD.
+          }
+        </p>
+      }
+    </div>
+  </form>
+
+  <ng-container modalFooter>
+    <button type="button" class="btn" (click)="closed.emit()">Cancelar</button>
+    <button type="submit" form="plate-action-form" class="btn btn--primary" [disabled]="saving()">
+      {{ saving() ? texts().busy : texts().submit }}
+    </button>
+  </ng-container>
+</app-modal>

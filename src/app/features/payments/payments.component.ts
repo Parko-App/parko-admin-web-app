@@ -5,6 +5,7 @@ import { toErrorMessage } from '../../core/http/error-message';
 import {
   PAYMENT_METHOD_LABELS,
   PaymentMethod,
+  PlateEntryResult,
   RegisterPaymentRequest,
   TICKET_SESSION_TYPE_LABELS,
   TICKET_STATUS_LABELS,
@@ -28,6 +29,7 @@ import { ticketReceipt } from '../../shared/receipt/receipt-builders';
 import { ReceiptData } from '../../shared/receipt/receipt.model';
 import { ReceiptService } from '../../shared/receipt/receipt.service';
 import { PaymentFormModalComponent } from './payment-form-modal/payment-form-modal.component';
+import { PlateActionMode, PlateActionModalComponent } from './plate-action-modal/plate-action-modal.component';
 import { PaymentsService } from './payments.service';
 
 const PAGE_SIZE = 20;
@@ -49,6 +51,7 @@ const TICKET_VARIANTS: Record<TicketStatus, BadgeVariant> = { PENDING: 'warning'
     CurrencyArPipe,
     DateTimeArPipe,
     PaymentFormModalComponent,
+    PlateActionModalComponent,
     ReceiptDialogComponent,
   ],
   templateUrl: './payments.component.html',
@@ -71,6 +74,11 @@ export class PaymentsComponent {
   protected readonly detailReceipt = signal<ReceiptData | null>(null);
   /** Mientras se consultan el saldo y el QR del ticket, los botones de la tabla quedan deshabilitados. */
   protected readonly loadingReceipt = signal(false);
+
+  /** Ingreso o egreso manual por patente (null = cerrado). */
+  protected readonly plateMode = signal<PlateActionMode | null>(null);
+  protected readonly plateSaving = signal(false);
+  protected readonly plateError = signal<string | null>(null);
 
   protected readonly manualOpen = signal(false);
   protected readonly manualSaving = signal(false);
@@ -174,6 +182,76 @@ export class PaymentsComponent {
       this.manualError.set(toErrorMessage(error));
     } finally {
       this.manualSaving.set(false);
+    }
+  }
+
+  // ---- ingreso / egreso manual por patente
+  protected openPlate(mode: PlateActionMode): void {
+    this.plateError.set(null);
+    this.plateMode.set(mode);
+  }
+
+  protected closePlate(): void {
+    if (!this.plateSaving()) {
+      this.plateMode.set(null);
+    }
+  }
+
+  protected async submitPlate(plate: string): Promise<void> {
+    const mode = this.plateMode();
+    if (!mode || this.plateSaving()) {
+      return;
+    }
+    this.plateSaving.set(true);
+    this.plateError.set(null);
+    try {
+      if (mode === 'ENTRY') {
+        const entry = await firstValueFrom(this.service.generateEntry(plate));
+        this.plateMode.set(null);
+        this.toast.success(`${entry.message} (${entry.ticketNumber})`);
+        await this.downloadEntryTicket(entry);
+      } else {
+        const exit = await firstValueFrom(this.service.generateExit(plate));
+        this.plateMode.set(null);
+        this.toast.success(`${exit.message} (${exit.ticketNumber})`);
+      }
+      this.list.reload();
+    } catch (error) {
+      this.plateError.set(toErrorMessage(error));
+    } finally {
+      this.plateSaving.set(false);
+    }
+  }
+
+  /**
+   * El ticket de un ingreso pendiente de pago se entrega impreso. Es el mismo PDF que "Generar PDF" en la lista
+   * (ticket a cobrar, con el QR del ticket), no el que genera access-service. Si el ingreso ya quedó pago (usuario
+   * registrado con saldo) no hay nada para cobrar y no se descarga.
+   */
+  private async downloadEntryTicket(entry: PlateEntryResult): Promise<void> {
+    if (entry.ticketStatus !== 'PENDING') {
+      return;
+    }
+    try {
+      const [ticket, extras] = await Promise.all([
+        firstValueFrom(this.service.findTicket(entry.ticketNumber)),
+        firstValueFrom(this.service.ticketExtras(entry.ticketId)),
+      ]);
+      const row: TicketRow = {
+        id: entry.ticketId,
+        ticketNumber: entry.ticketNumber,
+        issuedAt: ticket.entryAt,
+        paidAt: null,
+        status: ticket.status,
+        sessionType: ticket.sessionType,
+        plate: ticket.plate,
+        amount: ticket.amountDue,
+        method: null,
+        cashierName: null,
+      };
+      await this.receipts.download(ticketReceipt(row, extras));
+    } catch (error) {
+      this.toast.error(`El ingreso se generó, pero no se pudo preparar el PDF del ticket: ${toErrorMessage(error)}`);
     }
   }
 

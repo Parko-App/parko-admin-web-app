@@ -1,7 +1,11 @@
 <section class="card panel" aria-labelledby="search-title">
   <div class="panel__head">
     <h2 id="search-title">Buscar ticket</h2>
-    <button type="button" class="btn btn--primary" (click)="openManual()">Registrar pago</button>
+    <div class="panel__actions">
+      <button type="button" class="btn" (click)="openPlate('ENTRY')">Generar ingreso</button>
+      <button type="button" class="btn" (click)="openPlate('EXIT')">Generar egreso</button>
+      <button type="button" class="btn btn--primary" (click)="openManual()">Registrar pago</button>
+    </div>
   </div>
   <form class="search" (submit)="$event.preventDefault(); search()" novalidate>
     <label for="ticket-code" class="sr-only">Número de ticket</label>
@@ -103,6 +107,14 @@
     }
   </app-async-state>
 </section>
+
+<app-plate-action-modal
+  [mode]="plateMode()"
+  [saving]="plateSaving()"
+  [error]="plateError()"
+  (submitted)="submitPlate($event)"
+  (closed)="closePlate()"
+/>
 
 <app-payment-form-modal
   [open]="manualOpen()"
