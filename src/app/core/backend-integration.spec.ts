@@ -263,7 +263,7 @@ describe('integración: reportes', () => {
     expect(report.days[0]).toEqual({ date: '2026-11-15', peak: 200, average: 150.5 });
 
     const revenue = firstValueFrom(service.revenue(range));
-    http.expectOne((r) => r.url === `${API}/admin/reports/revenue`).flush({ days: [{ date: '2026-11-15', registered: 8000, visitors: 12000, total: 20000 }] });
-    expect((await revenue).days[0]).toEqual({ date: '2026-11-15', registered: 8000, visitors: 12000 });
+    http.expectOne((r) => r.url === `${API}/admin/reports/revenue`).flush({ days: [{ date: '2026-11-15', topUps: 8000, cash: 12000, total: 20000 }] });
+    expect((await revenue).days[0]).toEqual({ date: '2026-11-15', topUps: 8000, cash: 12000 });
   });
 });

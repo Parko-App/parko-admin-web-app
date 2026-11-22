@@ -36,10 +36,10 @@ export interface OccupancyReport {
 
 export interface RevenueDay {
   date: string;
-  /** Recaudado de usuarios registrados (en pesos). */
-  registered: number;
-  /** Recaudado de visitantes (en pesos). */
-  visitors: number;
+  /** Cargas de saldo acreditadas (en efectivo o por Mercado Pago), en pesos. */
+  topUps: number;
+  /** Cobros de tickets en efectivo, en pesos. */
+  cash: number;
 }
 
 export interface RevenueReport {

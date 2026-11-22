@@ -5,7 +5,7 @@
 </section>
 
 <section class="kpis" aria-label="Resumen de recaudación">
-  <app-kpi-card label="Total del período" hint="Registrados + visitantes">
+  <app-kpi-card label="Total del período" hint="Cargas de saldo + cobros en efectivo">
     {{ summary().total | currencyAr }}
   </app-kpi-card>
   <app-kpi-card label="Promedio diario" hint="Días hábiles y fin de semana">
@@ -24,8 +24,8 @@
       <thead>
         <tr>
           <th scope="col" appSortHeader="date" [sort]="sort()" (sortChange)="sort.set($event)">Fecha</th>
-          <th scope="col" appSortHeader="registered" [sort]="sort()" (sortChange)="sort.set($event)">Registrados</th>
-          <th scope="col" appSortHeader="visitors" [sort]="sort()" (sortChange)="sort.set($event)">Visitantes</th>
+          <th scope="col" appSortHeader="topUps" [sort]="sort()" (sortChange)="sort.set($event)">Cargas de saldo</th>
+          <th scope="col" appSortHeader="cash" [sort]="sort()" (sortChange)="sort.set($event)">Cobros en efectivo</th>
           <th scope="col" appSortHeader="total" [sort]="sort()" (sortChange)="sort.set($event)">Total</th>
         </tr>
       </thead>
@@ -33,8 +33,8 @@
         @for (row of rows(); track row.date) {
           <tr>
             <td>{{ day(row.date) }}</td>
-            <td class="mono">{{ row.registered | currencyAr }}</td>
-            <td class="mono">{{ row.visitors | currencyAr }}</td>
+            <td class="mono">{{ row.topUps | currencyAr }}</td>
+            <td class="mono">{{ row.cash | currencyAr }}</td>
             <td class="mono strong">{{ row.total | currencyAr }}</td>
           </tr>
         }

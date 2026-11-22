@@ -95,9 +95,9 @@ describe('exportación', () => {
   });
 
   it('genera el CSV de recaudación con el total y el de accesos', () => {
-    const revenue: RevenueReport = { days: [{ date: '2026-09-23', registered: 8400, visitors: 12300 }] };
+    const revenue: RevenueReport = { days: [{ date: '2026-09-23', topUps: 8400, cash: 12300 }] };
     expect(buildReportCsv({ type: 'REVENUE', range, data: revenue })).toBe(
-      '﻿Fecha;Registrados;Visitantes;Total\r\n23/09/2026;8400;12300;20700\r\n',
+      '﻿Fecha;Cargas de saldo;Cobros en efectivo;Total\r\n23/09/2026;8400;12300;20700\r\n',
     );
     const access: AccessReport = { days: [{ date: '2026-09-23', entries: 335, exits: 114, visitors: 34, registered: 301 }] };
     expect(buildReportCsv({ type: 'ACCESS', range, data: access })).toBe(
@@ -146,10 +146,10 @@ describe('ReportsComponent', () => {
     expect(kpis[1]).toContain(`$${new Intl.NumberFormat('es-AR').format(Math.round(sum / 7))}`);
     const best = Math.max(...totals);
     expect(kpis[2]).toContain(`$${new Intl.NumberFormat('es-AR').format(best)} recaudados`);
-    // cada renglón: total = registrados + visitantes
-    const registered = cells(1).map((t) => Number(t!.replace(/[$.]/g, '')));
-    const visitors = cells(2).map((t) => Number(t!.replace(/[$.]/g, '')));
-    expect(totals).toEqual(registered.map((r, i) => r + visitors[i]));
+    // cada renglón: total = cargas de saldo + cobros en efectivo
+    const topUps = cells(1).map((t) => Number(t!.replace(/[$.]/g, '')));
+    const cash = cells(2).map((t) => Number(t!.replace(/[$.]/g, '')));
+    expect(totals).toEqual(topUps.map((r, i) => r + cash[i]));
   });
 
   it('accesos: muestra ingresos, egresos, visitantes y registrados', async () => {
@@ -239,7 +239,7 @@ describe('ReportsComponent', () => {
       reader.onload = () => resolve(String(reader.result));
       reader.readAsText(blob!);
     });
-    expect(text).toContain('Fecha;Registrados;Visitantes;Total');
+    expect(text).toContain('Fecha;Cargas de saldo;Cobros en efectivo;Total');
     expect(text.split('\r\n').length).toBe(9); // encabezado + 7 días + salto final
     expect(TestBed.inject(ToastService).toasts()[0].message).toBe('Se descargó el reporte en CSV.');
   });

@@ -27,7 +27,7 @@ interface OccupancyReportDto {
 }
 
 interface RevenueReportDto {
-  days: { date: string; registered: number; visitors: number }[];
+  days: { date: string; topUps: number; cash: number }[];
 }
 
 interface AccessReportDto {
@@ -59,8 +59,8 @@ export class HttpReportsService extends ReportsService {
       map((report) => ({
         days: report.days.map((day) => ({
           date: day.date,
-          registered: Number(day.registered),
-          visitors: Number(day.visitors),
+          topUps: Number(day.topUps),
+          cash: Number(day.cash),
         })),
       })),
     );
@@ -115,9 +115,9 @@ export class MockReportsService extends ReportsService {
   revenue(range: DateRange): Observable<RevenueReport> {
     const days: RevenueDay[] = eachDay(range.from, range.to).map((date) => {
       const weekend = weekdayOf(date) === 6;
-      const registered = Math.round((weekend ? 2000 : 8000 + noise(date, 3) * 1600) / 50) * 50;
-      const visitors = Math.round((weekend ? 4000 : 10500 + noise(date, 4) * 2800) / 50) * 50;
-      return { date, registered, visitors };
+      const topUps = Math.round((weekend ? 4000 : 10500 + noise(date, 4) * 2800) / 50) * 50;
+      const cash = Math.round((weekend ? 2000 : 8000 + noise(date, 3) * 1600) / 50) * 50;
+      return { date, topUps, cash };
     });
     return of({ days });
   }

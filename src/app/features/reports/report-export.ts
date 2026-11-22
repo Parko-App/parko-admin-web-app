@@ -49,8 +49,8 @@ export function buildReportCsv(result: ReportResult): string {
     }
     case 'REVENUE':
       return toCsv(
-        ['Fecha', 'Registrados', 'Visitantes', 'Total'],
-        result.data.days.map<CsvCell[]>((d) => [formatDayFull(d.date), d.registered, d.visitors, d.registered + d.visitors]),
+        ['Fecha', 'Cargas de saldo', 'Cobros en efectivo', 'Total'],
+        result.data.days.map<CsvCell[]>((d) => [formatDayFull(d.date), d.topUps, d.cash, d.topUps + d.cash]),
       );
     case 'ACCESS':
       return toCsv(

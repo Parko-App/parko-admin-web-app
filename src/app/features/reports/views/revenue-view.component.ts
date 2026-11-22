@@ -12,15 +12,15 @@ import { sortRows } from '../../../shared/utils/sort';
 
 interface RevenueRow {
   date: string;
-  registered: number;
-  visitors: number;
+  topUps: number;
+  cash: number;
   total: number;
 }
 
 const ACCESSORS: Record<string, (row: RevenueRow) => unknown> = {
   date: (r) => r.date,
-  registered: (r) => r.registered,
-  visitors: (r) => r.visitors,
+  topUps: (r) => r.topUps,
+  cash: (r) => r.cash,
   total: (r) => r.total,
 };
 
@@ -39,7 +39,7 @@ export class RevenueViewComponent {
   protected readonly formatAxis = formatMoneyAxis;
 
   private readonly allRows = computed(() =>
-    this.report().days.map<RevenueRow>((day) => ({ ...day, total: day.registered + day.visitors })),
+    this.report().days.map<RevenueRow>((day) => ({ ...day, total: day.topUps + day.cash })),
   );
   protected readonly rows = computed(() => sortRows(this.allRows(), this.sort(), ACCESSORS));
 
@@ -57,12 +57,12 @@ export class RevenueViewComponent {
 
   protected readonly labels = computed(() => this.report().days.map((day) => formatDayShort(day.date)));
   protected readonly series = computed<ChartSeries[]>(() => [
-    { name: 'Registrados', values: this.report().days.map((d) => d.registered), color: 'var(--color-primary)' },
-    { name: 'Visitantes', values: this.report().days.map((d) => d.visitors), color: '#7ba7d4' },
+    { name: 'Cargas de saldo', values: this.report().days.map((d) => d.topUps), color: 'var(--color-primary)' },
+    { name: 'Cobros en efectivo', values: this.report().days.map((d) => d.cash), color: '#7ba7d4' },
   ]);
 
   protected readonly rangeText = computed(() => `${formatDayFull(this.range().from)} — ${formatDayFull(this.range().to)}`);
-  protected readonly ariaLabel = computed(() => `Recaudación por día, registrados y visitantes, ${this.rangeText()}`);
+  protected readonly ariaLabel = computed(() => `Recaudación por día, cargas de saldo y cobros en efectivo, ${this.rangeText()}`);
 
   protected day(date: string): string { return formatDayShort(date); }
   protected longDay(date: string): string { return formatDayLong(date); }

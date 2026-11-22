@@ -149,7 +149,7 @@ function describe(result: ReportResult): View {
     }
     case 'REVENUE': {
       const { days } = result.data;
-      const totals = days.map((d) => d.registered + d.visitors);
+      const totals = days.map((d) => d.topUps + d.cash);
       const total = totals.reduce((sum, value) => sum + value, 0);
       const best = totals.indexOf(Math.max(...totals));
       return {
@@ -162,13 +162,13 @@ function describe(result: ReportResult): View {
         kind: 'stacked',
         labels: days.map((d) => formatDayShort(d.date)),
         series: [
-          { name: 'Registrados', color: PRIMARY, values: days.map((d) => d.registered) },
-          { name: 'Visitantes', color: ORANGE, values: days.map((d) => d.visitors) },
+          { name: 'Cargas de saldo', color: PRIMARY, values: days.map((d) => d.topUps) },
+          { name: 'Cobros en efectivo', color: ORANGE, values: days.map((d) => d.cash) },
         ],
         moneyAxis: true,
         table: {
-          headers: ['Fecha', 'Registrados', 'Visitantes', 'Total'],
-          rows: days.map((d, i) => [formatDayFull(d.date), formatPesos(d.registered), formatPesos(d.visitors), formatPesos(totals[i])]),
+          headers: ['Fecha', 'Cargas de saldo', 'Cobros en efectivo', 'Total'],
+          rows: days.map((d, i) => [formatDayFull(d.date), formatPesos(d.topUps), formatPesos(d.cash), formatPesos(totals[i])]),
           numeric: [false, true, true, true],
         },
       };
