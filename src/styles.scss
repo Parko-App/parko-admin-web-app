@@ -13,6 +13,11 @@ body {
   margin: 0;
 }
 
+// El elemento raíz es "inline" por defecto: dejaba una línea vacía bajo el layout y la página scrolleaba.
+app-root {
+  display: block;
+}
+
 body {
   font-family: var(--font-family);
   font-size: 14px;

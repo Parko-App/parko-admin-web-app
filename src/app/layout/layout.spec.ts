@@ -45,6 +45,18 @@ describe('Layout administrativo', () => {
     expect(el.querySelector('.sidebar__logo')?.textContent?.trim()).toBe('');
   });
 
+  it('el layout se fija a la ventana y solo el contenido scrollea (una sola barra de scroll)', async () => {
+    const fixture = TestBed.createComponent(AdminLayoutComponent);
+    await fixture.whenStable();
+    const el: HTMLElement = fixture.nativeElement;
+
+    const layout = getComputedStyle(el.querySelector('.admin-layout')!);
+    expect(layout.position).toBe('fixed');
+    expect(layout.overflow).toBe('hidden');
+    expect(getComputedStyle(el.querySelector('.admin-layout__content')!).overflowY).toBe('auto');
+    expect(getComputedStyle(el.querySelector('.admin-layout__main')!).minHeight).toBe('0px');
+  });
+
   it('resalta la opción activa', async () => {
     const router = TestBed.inject(Router);
     await router.navigateByUrl('/admin/pagos');
