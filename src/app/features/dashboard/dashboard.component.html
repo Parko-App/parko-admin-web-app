@@ -87,7 +87,6 @@
             <caption class="sr-only">Últimos accesos al estacionamiento</caption>
             <thead>
               <tr>
-                <th scope="col" appSortHeader="id" [sort]="sort()" (sortChange)="sort.set($event)">ID</th>
                 <th scope="col" appSortHeader="plate" [sort]="sort()" (sortChange)="sort.set($event)">Patente</th>
                 <th scope="col" appSortHeader="userName" [sort]="sort()" (sortChange)="sort.set($event)">Usuario</th>
                 <th scope="col" appSortHeader="userType" [sort]="sort()" (sortChange)="sort.set($event)">Tipo</th>
@@ -98,7 +97,6 @@
             <tbody>
               @for (row of sortedRecent(); track row.id) {
                 <tr>
-                  <td class="mono muted">{{ row.id }}</td>
                   <td class="mono strong">{{ row.plate ?? '—' }}</td>
                   <td>{{ row.userName }}</td>
                   <td>

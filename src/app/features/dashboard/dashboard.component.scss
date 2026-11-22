@@ -43,11 +43,12 @@
   .mono { font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace; font-size: 12px; }
   .muted { color: var(--color-muted); }
   .strong { font-weight: 600; }
-}
 
-.movement { font-weight: 500; }
-.movement--entry { color: #166534; }
-.movement--exit { color: #c2410c; }
+  // Dentro de .access: si no, "td { color }" tiene más especificidad y los colores no se ven.
+  .movement { font-weight: 500; }
+  .movement--entry { color: #166534; }
+  .movement--exit { color: #c2410c; }
+}
 
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 

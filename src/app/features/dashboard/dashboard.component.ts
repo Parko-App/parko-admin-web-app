@@ -35,7 +35,6 @@ const MOVEMENTS: Record<AccessMovement, { label: string; arrow: string; css: str
 };
 
 const ACCESS_SORT: Record<string, (row: RecentAccess) => unknown> = {
-  id: (row) => row.id,
   plate: (row) => row.plate,
   userName: (row) => row.userName,
   userType: (row) => USER_TYPES[row.userType].label,
