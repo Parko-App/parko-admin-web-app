@@ -1,11 +1,11 @@
-// Desarrollo (ng serve). apiUrl es relativo: proxy.conf.json lo redirige a https://api.parko.site.
+// Desarrollo (ng serve). apiUrl es relativo: proxy.conf.json lo redirige a http://localhost:8080.
 // useMocks: true -> login y datos simulados (sin backend). Ponelo en false para probar contra Firebase y la API real.
 export const environment = {
   production: false,
   apiUrl: '/api/v1',
   // Capacidad total del estacionamiento (base de los porcentajes de ocupación). PROVISORIO: el backend no la informa.
   parkingCapacity: 247,
-  useMocks: true,
+  useMocks: false,
   firebase: {
     apiKey: 'AIzaSyC98baiG5R_rU6r_p0-YZ2uGrh06hjrZD0',
     authDomain: 'parko-2271f.firebaseapp.com',
