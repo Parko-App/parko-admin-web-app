@@ -7,6 +7,7 @@ import {
   ACCESS_USER_TYPE_LABELS,
   AccessMethod,
   AccessRecord,
+  AccessResult,
 } from '../../core/models/access.model';
 import { AccessMovement, AccessUserType } from '../../core/models/dashboard.model';
 import { PageResponse } from '../../core/models/page-response.model';
@@ -41,6 +42,7 @@ type Seed = [
   userType: AccessUserType,
   movement: AccessMovement,
   method: AccessMethod,
+  result?: AccessResult,
 ];
 
 /** Movimientos de ejemplo: desde hace unos minutos hasta ayer (relativos al momento de la consulta). */
@@ -49,7 +51,7 @@ const SEEDS: Seed[] = [
   [14, null, 'Visitante', 'VISITOR', 'ENTRY', 'MANUAL'],
   [22, 'GH789IJ', 'Valentina Romero', 'REGISTERED', 'EXIT', 'AUTOMATIC'],
   [31, 'CD456EF', 'Martín Gutiérrez', 'REGISTERED', 'ENTRY', 'AUTOMATIC'],
-  [39, 'XY987ZW', 'Visitante', 'VISITOR', 'EXIT', 'MANUAL'],
+  [39, 'XY987ZW', 'Visitante', 'VISITOR', 'EXIT', 'MANUAL', 'DENIED'],
   [47, 'KL321MN', 'Sofía Herrera', 'TEACHER', 'ENTRY', 'AUTOMATIC'],
   [58, 'OP654QR', 'Diego Morales', 'REGISTERED', 'ENTRY', 'AUTOMATIC'],
   [66, 'ST987UV', 'Ana López', 'STAFF', 'EXIT', 'AUTOMATIC'],
@@ -86,13 +88,14 @@ const SORT_ACCESSORS: Record<string, (record: AccessRecord) => unknown> = {
 export class MockAccessService extends AccessService {
   list(query: ListQuery): Observable<PageResponse<AccessRecord>> {
     const now = Date.now();
-    const all: AccessRecord[] = SEEDS.map(([minutesAgo, plate, userName, userType, movement, method], index) => ({
+    const all: AccessRecord[] = SEEDS.map(([minutesAgo, plate, userName, userType, movement, method, result], index) => ({
       id: `E-${String(index + 1).padStart(4, '0')}`,
       plate,
       userName,
       userType,
       movement,
       method,
+      result: result ?? 'AUTHORIZED',
       timestamp: new Date(now - minutesAgo * 60_000).toISOString(),
     }));
 

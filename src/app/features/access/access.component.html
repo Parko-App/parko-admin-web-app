@@ -57,9 +57,9 @@
               } @else {
                 <td class="muted">Sin patente</td>
               }
-              <td [class]="'movement movement--' + (record.movement === 'ENTRY' ? 'entry' : 'exit')">
+              <td [class]="'movement movement--' + movementClass(record)">
                 <span aria-hidden="true">{{ movementArrow(record.movement) }}</span>
-                {{ movementLabel(record.movement) }}
+                {{ movementText(record) }}
               </td>
               <td class="muted">{{ record.timestamp | dateTimeAr }}</td>
               <td class="user">{{ record.userName }}</td>

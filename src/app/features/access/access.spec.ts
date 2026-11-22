@@ -2,7 +2,7 @@ import { registerLocaleData } from '@angular/common';
 import localeEsAr from '@angular/common/locales/es-AR';
 import { LOCALE_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { Observable, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { AccessRecord } from '../../core/models/access.model';
 import { PageResponse } from '../../core/models/page-response.model';
 import { ListQuery } from '../../shared/utils/paged-list';
@@ -59,6 +59,53 @@ describe('AccessComponent', () => {
     expect(first).toContain('Automático');
     expect(el.querySelector('th[appSortHeader="timestamp"]')?.getAttribute('aria-sort')).toBe('descending');
     expect(el.querySelector('app-pagination')).not.toBeNull(); // 25 movimientos -> 3 páginas
+  });
+
+  describe('accesos denegados', () => {
+    const record = (id: string, movement: 'ENTRY' | 'EXIT', result?: 'AUTHORIZED' | 'DENIED'): AccessRecord => ({
+      id,
+      plate: 'NVZ087',
+      userName: 'Visitante',
+      userType: 'VISITOR',
+      timestamp: '2026-11-21T10:47:00-03:00',
+      movement,
+      method: 'AUTOMATIC',
+      ...(result ? { result } : {}),
+    });
+    const serviceWith = (...records: AccessRecord[]): AccessService => ({
+      list: () => of({ content: records, page: 0, size: 10, totalElements: records.length, totalPages: 1 }),
+    });
+    const movementCells = (el: HTMLElement) =>
+      Array.from(el.querySelectorAll('.access tbody tr')).map((tr) => tr.children[1] as HTMLElement);
+
+    it('un egreso con result DENIED se muestra como "Egreso denegado", en rojo', async () => {
+      const { el } = await setup(serviceWith(record('1', 'EXIT', 'DENIED')));
+      const cell = movementCells(el)[0];
+      expect(cell.textContent?.replace(/\s+/g, ' ').trim()).toContain('Egreso denegado');
+      expect(cell.classList).toContain('movement--denied');
+      expect(cell.classList).not.toContain('movement--exit');
+    });
+
+    it('un egreso autorizado, o sin result, sigue mostrándose como "Egreso"', async () => {
+      const { el } = await setup(serviceWith(record('1', 'EXIT', 'AUTHORIZED'), record('2', 'EXIT')));
+      for (const cell of movementCells(el)) {
+        expect(cell.textContent?.replace(/\s+/g, ' ').trim()).toMatch(/Egreso$/);
+        expect(cell.textContent).not.toContain('denegado');
+        expect(cell.classList).toContain('movement--exit');
+      }
+    });
+
+    it('un ingreso denegado también lo dice', async () => {
+      const { el } = await setup(serviceWith(record('1', 'ENTRY', 'DENIED')));
+      expect(movementCells(el)[0].textContent).toContain('Ingreso denegado');
+    });
+
+    it('la demostración incluye un egreso denegado entre los movimientos', async () => {
+      const { el } = await setup();
+      expect(el.querySelector('.access tbody')?.textContent ?? '').toContain('Ingreso');
+      // el egreso denegado de la demo está en la primera página
+      expect(Array.from(el.querySelectorAll('.access .movement--denied')).length).toBeGreaterThanOrEqual(1);
+    });
   });
 
   it('muestra "Sin patente" para visitantes sin patente y el método manual', async () => {

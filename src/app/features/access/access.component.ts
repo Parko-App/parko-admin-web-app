@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { ACCESS_METHOD_LABELS, ACCESS_MOVEMENT_LABELS, ACCESS_USER_TYPE_LABELS, AccessMethod, AccessRecord } from '../../core/models/access.model';
+import { ACCESS_METHOD_LABELS, ACCESS_MOVEMENT_LABELS, ACCESS_USER_TYPE_LABELS, AccessMethod, AccessRecord, accessMovementText } from '../../core/models/access.model';
 import { AccessMovement, AccessUserType } from '../../core/models/dashboard.model';
 import { AsyncStateComponent } from '../../shared/components/async-state/async-state.component';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
@@ -76,6 +76,10 @@ export class AccessComponent {
   }
 
   protected movementLabel(movement: AccessMovement): string { return ACCESS_MOVEMENT_LABELS[movement]; }
+  protected movementText(record: AccessRecord): string { return accessMovementText(record); }
+  protected movementClass(record: AccessRecord): string {
+    return record.result === 'DENIED' ? 'denied' : record.movement === 'ENTRY' ? 'entry' : 'exit';
+  }
   protected movementArrow(movement: AccessMovement): string { return MOVEMENT_ARROWS[movement]; }
   protected userTypeLabel(type: AccessUserType): string { return ACCESS_USER_TYPE_LABELS[type]; }
   protected userTypeVariant(type: AccessUserType): BadgeVariant { return USER_TYPE_VARIANTS[type]; }

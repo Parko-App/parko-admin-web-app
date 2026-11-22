@@ -77,6 +77,7 @@ app-pagination { display: block; padding: 0 20px 16px; }
   .movement { font-weight: 500; }
   .movement--entry { color: #166534; }
   .movement--exit { color: #c2410c; }
+  .movement--denied { color: #b91c1c; font-weight: 600; }
 }
 
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
