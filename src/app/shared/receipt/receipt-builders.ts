@@ -27,6 +27,7 @@ export function paymentReceipt(payment: PaymentRecord): ReceiptData {
     ],
     amount: payment.amount,
     direction: 'debit',
+    withQr: true,
   };
 }
 
@@ -65,11 +66,12 @@ export function ticketReceipt(row: TicketRow, extras: TicketExtras): ReceiptData
     ],
     amount: row.amount ?? 0,
     direction: 'neutral',
+    withQr: true,
     ...(extras.qrData ? { qrData: extras.qrData } : {}),
   };
 }
 
-/** Carga de saldo de un usuario: suma (verde) solo si fue acreditada. */
+/** Carga de saldo de un usuario: suma (verde) solo si fue acreditada. Sin código QR. */
 export function topUpReceipt(topUp: TopUp): ReceiptData {
   return {
     code: topUp.transactionNumber,
@@ -84,5 +86,6 @@ export function topUpReceipt(topUp: TopUp): ReceiptData {
     ],
     amount: topUp.amount,
     direction: topUp.status === 'CREDITED' ? 'credit' : 'neutral',
+    withQr: false,
   };
 }

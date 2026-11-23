@@ -20,7 +20,10 @@ export class ReceiptDialogComponent {
   readonly data = input.required<ReceiptData | null>();
   /** Permite deshabilitar el PDF (por ejemplo, cargas que no fueron acreditadas). */
   readonly pdfEnabled = input(true);
-  /** Muestra el código QR en el detalle. El PDF lleva su propio QR, aunque acá no se muestre. */
+  /**
+   * Muestra el código QR en el detalle, si el comprobante lo lleva (`withQr`; las cargas de saldo no).
+   * El PDF de un comprobante con QR lo incluye aunque acá no se muestre.
+   */
   readonly showQr = input(true);
   readonly closed = output<void>();
 
@@ -33,7 +36,7 @@ export class ReceiptDialogComponent {
       const data = this.data();
       const request = ++this.qrRequest;
       this.qr.set(null);
-      if (this.open() && data && this.showQr()) {
+      if (this.open() && data?.withQr && this.showQr()) {
         void qrMatrix(data.code).then((matrix) => {
           if (request === this.qrRequest) {
             this.qr.set({ size: matrix.length, path: qrPath(matrix) });

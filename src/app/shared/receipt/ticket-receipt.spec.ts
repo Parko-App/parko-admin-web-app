@@ -134,7 +134,7 @@ describe('diálogo de detalle', () => {
     expect(el.textContent).toContain('Saldo del usuario');
   });
 
-  it('muestra el QR por defecto (cargas de saldo)', async () => {
+  it('muestra el QR por defecto (tickets)', async () => {
     const el = await render();
 
     expect(el.querySelector('svg.receipt__qr')).not.toBeNull();
