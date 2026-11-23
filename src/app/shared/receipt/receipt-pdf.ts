@@ -33,7 +33,10 @@ export function receiptFileName(data: Pick<ReceiptData, 'code'>): string {
 
 /** Arma el comprobante en PDF (A4) con el mismo diseño que el detalle en pantalla. */
 export async function buildReceiptPdf(data: ReceiptData): Promise<Blob> {
-  const [{ jsPDF }, matrix] = await Promise.all([import('jspdf'), qrMatrix(receiptQrText(data))]);
+  const [{ jsPDF }, matrix] = await Promise.all([
+    import('jspdf'),
+    data.withQr ? qrMatrix(receiptQrText(data)) : Promise.resolve(null),
+  ]);
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
 
   const left = 45;
@@ -80,21 +83,25 @@ export async function buildReceiptPdf(data: ReceiptData): Promise<Blob> {
   doc.setFontSize(19).setTextColor(...AMOUNT_COLORS[data.direction]);
   doc.text(receiptAmountText(data), right, y, { align: 'right' });
 
-  // Código QR (vectorial)
+  // Código QR (vectorial), solo en los comprobantes que lo llevan (tickets)
   y += 10;
-  const qrSize = 36;
-  const cell = qrSize / matrix.length;
-  const qrLeft = left + (width - qrSize) / 2;
-  doc.setFillColor(0, 0, 0);
-  matrix.forEach((row, rowIndex) =>
-    row.forEach((dark, columnIndex) => {
-      if (dark) {
-        // un pequeño solapamiento evita líneas blancas entre módulos al ampliar
-        doc.rect(qrLeft + columnIndex * cell, y + rowIndex * cell, cell + 0.02, cell + 0.02, 'F');
-      }
-    }),
-  );
-  y += qrSize + 7;
+  if (matrix) {
+    const qrSize = 36;
+    const cell = qrSize / matrix.length;
+    const qrLeft = left + (width - qrSize) / 2;
+    doc.setFillColor(0, 0, 0);
+    matrix.forEach((row, rowIndex) =>
+      row.forEach((dark, columnIndex) => {
+        if (dark) {
+          // un pequeño solapamiento evita líneas blancas entre módulos al ampliar
+          doc.rect(qrLeft + columnIndex * cell, y + rowIndex * cell, cell + 0.02, cell + 0.02, 'F');
+        }
+      }),
+    );
+    y += qrSize + 7;
+  } else {
+    y += 4;
+  }
 
   doc.setFont('helvetica', 'normal').setFontSize(9).setTextColor(...MUTED);
   doc.text('Comprobante oficial emitido por Parko', left + width / 2, y, { align: 'center' });

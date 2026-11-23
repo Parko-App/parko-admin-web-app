@@ -53,6 +53,34 @@ describe('Comprobantes', () => {
     expect(receiptFileName(t)).toBe('comprobante-TX-54EFBE.pdf');
   });
 
+  it('solo los comprobantes de tickets llevan QR; las cargas de saldo no', () => {
+    expect(paymentReceipt(payment).withQr).toBe(true);
+    expect(topUpReceipt(topUp).withQr).toBe(false);
+    expect(topUpReceipt({ ...topUp, status: 'PENDING' }).withQr).toBe(false);
+  });
+
+  it('el PDF de una carga de saldo no dibuja el QR', async () => {
+    // jsPDF dibuja cada módulo del QR como un rectángulo relleno ("re" + "f"); sin QR solo quedan los del sello
+    const fills = async (blob: Blob) => ((await readBlob(blob)).match(/ re\s+f/g) ?? []).length;
+    const withQr = await fills(await buildReceiptPdf(paymentReceipt(payment)));
+    const withoutQr = await fills(await buildReceiptPdf(topUpReceipt(topUp)));
+    expect(withQr).toBeGreaterThan(100);
+    expect(withoutQr).toBeLessThan(5);
+  });
+
+  it('el detalle de una carga de saldo no muestra el QR', async () => {
+    TestBed.configureTestingModule({ imports: [ReceiptDialogComponent], providers: [{ provide: LOCALE_ID, useValue: 'es-AR' }] });
+    const fixture = TestBed.createComponent(ReceiptDialogComponent);
+    fixture.componentRef.setInput('open', true);
+    fixture.componentRef.setInput('data', topUpReceipt(topUp));
+    fixture.detectChanges();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.textContent).toContain('Carga de Saldo');
+    expect(el.querySelector('svg.receipt__qr')).toBeNull();
+  });
+
   it('genera una matriz de QR cuadrada', async () => {
     const matrix = await qrMatrix('TX-54EFBE');
     expect(matrix.length).toBeGreaterThan(20);

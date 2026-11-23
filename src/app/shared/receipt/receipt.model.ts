@@ -15,6 +15,8 @@ export interface ReceiptData {
   rows: ReceiptRow[];
   amount: number;
   direction: 'credit' | 'debit' | 'neutral';
+  /** Lleva código QR (en pantalla y en el PDF). Solo los comprobantes de tickets; las cargas de saldo no. */
+  withQr: boolean;
   /**
    * Contenido del QR del PDF. Si no se informa, el QR lleva `code`.
    * En un ticket pendiente es el `qr_data` del ticket, para poder escanearlo y pagarlo.

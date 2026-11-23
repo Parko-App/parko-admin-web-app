@@ -26,6 +26,14 @@ function fill(el: HTMLElement, email: string, password: string) {
 }
 
 describe('LoginComponent', () => {
+  it('el encabezado usa el logo de Parko, no una letra', async () => {
+    const { el } = await setup();
+    const logo = el.querySelector('.auth__brand .auth__logo img') as HTMLImageElement;
+    expect(logo).not.toBeNull();
+    expect(logo.getAttribute('src')).toBe('logo.png');
+    expect(el.querySelector('.auth__logo')?.textContent?.trim()).toBe('');
+  });
+
   it('valida los campos obligatorios', async () => {
     const { fixture, el } = await setup();
     (el.querySelector('form') as HTMLFormElement).dispatchEvent(new Event('submit'));
